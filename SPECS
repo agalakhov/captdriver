@@ -1,0 +1,234 @@
+This document describes printing protocol of Canon CAPT printers.
+
+Written by Alexey Galakhov <agalakhov@gmail.com>
+
+Reverse engineering done by:
+2004 Nicolas Boichat (LBP-810, based on Rildo Pragana's Samsung ML-85P work)
+2010 Alexey Galakhov (LBP-2900)
+2010 Benoit Bolsee (LBP-3010)
+2013 Alexey Galakhov - summarized everything and corrected errors
+
+1. A0-command protocol
+======================
+
+The same high level protocol called "CAPT" seems to be used by all Canon LBP
+printers, both LPT and USB. The exact command set depends on the printer model.
+The protocol is essentially bi-directional. The same command set is used in the
+unidirectional mode for communication between Canon proprietary utility
+"captfilter" and the printer port monitor. This commuinication uses an
+extended command set that is translated to the printer command set somewhere
+inside "ccpd" daemon.
+
+
+1.1. General format of CAPT commands
+
+All transmit are in 16-bit, little-endian words. Each command has the HEADER
+of 4 bytes followed:
+
+struct capt_packet {
+    uint16_t command;                  /* command code */
+    uint16_t size;                     /* size of the transmit, incl. header */
+    uint16_t payload[(size - 4) / 2];  /* data, 0 or more bytes */
+};
+
+Example: command 0xD0A1 with no payload is encoded as follows: A1 D0 04 00.
+
+Some commands have replies. A printer reply has the same format as the command.
+The command code in the reply is the same as in the command.
+
+Example:
+command: A5 E0 14 00 EE DB EA AD 00 00 00 00 00 00 00 00 00 00 00 00
+reply:   A5 E0 06 00 00 00
+
+If the command requires a reply, the driver MUST read the reply before issuing
+any other commands. Failure to do so will cause printer deadlock. If the command
+requires no reply, the driver should not try to wait to the reply or else it
+will wait forever.
+
+If the reply has size of more than 6 bytes, it is split into two packets, the
+one of 6 bytes and the one with the rest. No replies are shorter than 6 bytes.
+
+Quirk: some printer models reply to some commands with size encoded as BCD
+instead of normal binary code. This is obviously a bug in the printer firmware.
+Example: decimal 57 may be encoded as 0x57 0x00 and not as 0x39 0x00.
+
+
+1.2. Common printer control commands
+
+
+1.3. Compression control commands
+
+All 0xD0xx commands have no reply. They all are one-way.
+
+
+* 0xD0A0
+Page parameters. Mandatory. Issued before each page.
+  0-11:  ? 00 00 30 2a 02 00 00 00 1f 1f 1f 1f
+                       ^^ related to page dimensions? letter=0d, A4=02
+  12:    00 paper type A? 00 = plain, 01 = thick
+  13-18: ? 11 04 00 01 01 02
+  19:    toner saving (0 = no, 1 = yes)
+  20-25: ? 00 00 78 00 60 00
+  26-27: uint16_t image width (line size in bytes) = LINESIZE for compressor
+  28-29: uint16_t image height (number of lines)
+  30-31: uint16_t paper width (pixels = inches * 600)
+  32-33: uint16_t paper height (pixels = inches * 600)
+  -- Older printers have only 34 bytes
+  34-35: ? 00 00
+  36:    01 paper type B? 01 = plain, 02 = thick
+  37-39: ? 00 00 00
+
+
+* 0xD0A1
+Initialize page? Has no data. Issued before each page.
+
+
+* 0xD0A2
+Reset? Has no data. Issued after page but may be issued before page.
+
+
+* 0xD0A4
+Hi-SCoA compression parameters on Hi-SCoA printers. Mandatory. Issued before
+sending Hi-SCoA compressed data. See section 3 for the complete description of
+these parameters. Contains 8-byte data.
+  0:   int8_t value of L3, positive
+  1:   int8_t value of L5, positive
+  2:   0x01 unknown, may be flag
+  3:   0x01 unknown, may be bpp (0x08 for color printers?)
+  4:   int8_t value of L0 (?), always zero
+  5:   int8_t value of L2, negative
+  6-7: int16_t value of L4 (?)
+
+* 0xD0A5, 0xD0A6, 0xD0A7
+Hi-SCoA parameters for color printers?
+
+* 0xD0A9 - multi-command
+Contains other 0xD0nn commands, like that: A9 D0 C0 00 A1 D0 04 00 A2 D0 04 00
+Used to send multiple 0xD0nn commands in a row on printers that support it.
+
+
+2. SCoA compression algorithm
+=============================
+
+To be written.
+
+
+3. Hi-SCoA compression algorithm
+================================
+
+Hi-SCoA data are compressed band by band, each band is compressed independently
+of others. Band size may vary. It seems that most printers may work with
+different band sizes. The algorithm is known completely.
+
+3.1. Data encoding
+
+Hi-SCoA data are represented as a bit stream. Bits are written MSB first. The
+entire stream is always 4-byte aligned by adding 1s up to 32-bit boundary. On a
+little-endian machine the stream is written by bytes and not by 32-bit words.
+This does not matter on big-endian.
+
+Example: bits 1,0,0,0,1,1,0,1,1,1,1,0,1,0,1,1 correspond to 8D EB FF FF.
+
+The encoded stream is obfuscated by XORing it with the constant value 0x43.
+The above example becomes CE A8 BC BC.
+
+
+3.2. Command encoding
+
+Hi-SCoA bit stream consists of commands. Command opcodes are written using
+unary coding. There are 8 commands. Some commands have two subcommands which are
+encoded by adding one bit after the command code.
+
+Command 0:        LONGREP0
+Command 10:       REPBYTE
+Command 110:
+ subcommand 1:    BYTE
+ subcommand 0:    LONGREP2
+Command 1110:     LONGREP3
+Command 11110:    LONGREP4
+Command 111110:   LONGREP5
+Command 1111110:
+ subcommand 1:    ZEROBYTE
+ subcommand 0:    PREFIX
+Command 11111110: END
+Bit sequence 11111111 used for alignment only and seems to be NOP.
+
+
+3.3. Number encoding
+
+LONGREP commands use number parameter that is encoded in Elias gamma coding.
+First, order is encoded by putting [order] 1s and one 0 to the stream. The order
+is always 5 or less. Then [order+1] bits of the number N follow (MSB first).
+Result is given by the formula:  number = (1 << (order + 2)) - 1 - N.
+
+There are exceptions from this rule. Zero is encoded as 111111. If order is 0,
+it is followed by one or two bits: 0 -> 1, 11 -> 2, 10 -> 3.
+
+Example:
+ 0  111111
+ 1  00
+ 2  011
+ 3  010
+ 4  1011
+ 5  1010
+ 6  1001
+ 7  1000
+ 8  110111
+15  110000
+16  11101111
+17  11101110
+etc.
+
+Numbers of 128 or more are not encoded this way.
+
+PREFIX command uses number parameter that is encoded in the following coding.
+First, order is written in two bits (MSB first). Then [order] bits of N follow.
+The resulting value is given by:  prefix = 128 * ((1 << order) - 1 - N).
+
+Numbers of more than 512 are not encoded this way.
+
+
+3.4. Command description
+
+Hi-SCoA uses a significantly simplified and limited variant of LZ77 compression.
+In addition to the usual window it maintains a stash of no more than 16 bytes.
+A byte may be pushed to the stash (the stash is shifted so that the last byte
+has now index 0, like a stack). A byte may be popped from the stash by its
+index. It is then always pushed back and becomes index 0.
+
+The stream consists of the following commands:
+
+ BYTE     - read the following 8 bits, put the corresponding byte to the stream
+            and push it to the stack
+ ZEROBYTE - shorter equivalent of BYTE 00000000
+ REPBYTE  - read the following 4 bits (i), take and remove [15-i]th byte from
+            the stash, put it to the stream and push back to the stash.
+ PREFIX   - read the following prefix (see section 3.3) and apply it to the
+            next command. Used only before LONGREPx.
+ LONGREPx - read the following number N (see section 3.3) and copy prefix+N
+            bytes from output position POSx to the output. The following
+            positions are initially used:
+              POS0 = LINESIZE + L0
+              POS2 = LINESIZE + L2
+              POS3 = L3
+              POS4 = L4
+              POS5 = L5
+            In addition, LONGREP2 exchanges L2 and L0 and LONGREP5 exchanges
+            L3 and L5 after copying. (This may be configurable, however).
+            LONGREP commands in Canon driver never cross line boundary but this
+            seems to be optional and not really needed.
+ END      - read the following 2-bit number and stop decompression. Number
+            meanings are:
+              00 - end of band
+              01 - end of page
+              10 - unknown/never seen
+              11 - unknown/never seen
+
+Compression constants L0, L2, L3, L4, L5 and LINESIZE are sent to the
+decompressor in 0xD0A0 and 0xD0A4 commands (see section 1.3). L0 is always 0,
+other values are typically
+ L2 = -7, L3 = 1, L4 = (not used), L5 = 4, LINESIZE = 592 or 608
+ L2 = -5, L3 = 4, L4 = 384, L5 = 12, LINESIZE = 592
+The actual values are probably optimized for certain dithering algorithm. They
+rarely change but are not constant for the printer.
+

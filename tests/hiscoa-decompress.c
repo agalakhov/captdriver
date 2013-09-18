@@ -144,7 +144,7 @@ unsigned hiscoa_decompress_band(
 		.origin_4 = params->origin_4,
 	};
 
-	unsigned ret;
+	unsigned ret = (unsigned) -1;
 	bool end = false;
 	while (! end && state.bitpos < 8 * state.input_size) {
 		bool no_reset_prefix = false;

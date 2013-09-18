@@ -1,7 +1,7 @@
 AC_PREREQ([2.69])
 AC_INIT([captdriver], [0.1.0])
 
-AC_CONFIG_SRCDIR([src/common.h])
+AC_CONFIG_SRCDIR([src/std.h])
 
 AM_INIT_AUTOMAKE([1.9 no-dist-gzip dist-xz tar-ustar])
 AC_LANG([C])

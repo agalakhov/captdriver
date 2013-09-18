@@ -72,6 +72,7 @@ static void capt_send_buf(void)
 			fwrite(iopos, 1, sendsize, capt_debug_file);
 
 		fwrite(iopos, 1, sendsize, stdout);
+		iopos += sendsize;
 		iosize -= sendsize;
 		fflush(stdout);
 

@@ -50,7 +50,7 @@ void ops_send_band_hiscoa(struct printer_state_s *state,
 		state->isend += 1;
 		if (state->isend % 16 == 0)
 			capt_wait_ready();
-		capt_send(CAPT_PRINT_DATA, band_ptr, band_size);
+		capt_send(CAPT_PRINT_DATA, band_ptr, send);
 		band_ptr += send;
 		band_size -= send;
 	}

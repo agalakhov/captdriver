@@ -16,6 +16,7 @@ struct page {
 
 static struct page page;
 
+static bool hi_mode = false;
 static unsigned line_size;
 static struct hiscoa_params hiscoa_params;
 
@@ -70,21 +71,20 @@ static void decode_hiscoa_params(const uint8_t *buf, size_t size)
 	hiscoa_params.origin_4 = (int16_t) WORD(buf[6], buf[7]);
 }
 
-static void decode_hiscoa_band(const uint8_t *buf, size_t size)
+static void decode_hiscoa_band_data(const uint8_t *buf, size_t size, unsigned lines)
 {
-	unsigned lines = WORD(buf[2], buf[3]);
 	const uint8_t *src;
 	size_t srcsize;
 	uint8_t *dest;
 	size_t destsize = 0;
 	unsigned type;
-	src = buf + 4;
-	srcsize = size - 4;
+	src = buf;
+	srcsize = size;
 	hiscoa_decompress_band((const void **)&src, &srcsize,
 			NULL, &destsize, line_size, &hiscoa_params);
 	dest = page_reserve(destsize);
-	src = buf + 4;
-	srcsize = size - 4;
+	src = buf;
+	srcsize = size;
 	type = hiscoa_decompress_band((const void **)&src, &srcsize,
 			dest, &destsize, line_size, &hiscoa_params);
 	page.size += destsize;
@@ -94,9 +94,25 @@ static void decode_hiscoa_band(const uint8_t *buf, size_t size)
 		(unsigned) srcsize, (unsigned) destsize);
 }
 
+static void decode_hiscoa_band(const uint8_t *buf, size_t size)
+{
+	unsigned lines = WORD(buf[2], buf[3]);
+	decode_hiscoa_band_data(buf + 4, size - 4, lines);
+}
+
 static void dispatch(uint16_t cmd, const uint8_t *buf, size_t size)
 {
 	switch (cmd) {
+	case 0xD0A9:
+		fprintf(stderr, "  --(multi-command)--\n");
+		while (size) {
+			uint16_t cc = WORD(buf[0], buf[1]);
+			unsigned cs = WORD(buf[2], buf[3]);
+			dispatch(cc, buf + 4, cs - 4);
+			buf += cs;
+			size -= cs;
+		}
+		break;
 	case 0xD0A0:
 		fprintf(stderr, "  -(compression parameters)-\n");
 		dump(buf, size);
@@ -107,16 +123,24 @@ static void dispatch(uint16_t cmd, const uint8_t *buf, size_t size)
 		fprintf(stderr, "  -(Hi-SCoA parameters)-\n");
 		dump(buf, size);
 		decode_hiscoa_params(buf, size);
+		hi_mode = true;
 		fprintf(stderr, "  decoded: [0]=%i+L [2]=%i+L [4]=%i [3]=%i [5]=%i\n",
 			hiscoa_params.origin_0, hiscoa_params.origin_2,
 			hiscoa_params.origin_4,
 			hiscoa_params.origin_3, hiscoa_params.origin_5);
 		break;
 	case 0xC0A0:
-		fprintf(stderr, "  -(SCoA data)-\n");
-		dump(buf, 16);
+		if (! hi_mode) {
+			fprintf(stderr, "  -(SCoA data)-\n");
+			dump(buf, 16);
+		} else {
+			fprintf(stderr, "  -(Hi-SCoA data from printer debug)-\n");
+			dump(buf, 4);
+			decode_hiscoa_band_data(buf, size, 70);
+		}
 		break;
 	case 0x8000:
+	case 0x8200:
 		fprintf(stderr, "  -(Hi-SCoA data)-\n");
 		dump(buf, 4);
 		decode_hiscoa_band(buf, size);
@@ -153,7 +177,8 @@ int main(int argc, char **argv)
 	while (1) {
 		int s;
 		uint16_t cmd;
-		uint16_t len;
+		uint32_t len;
+		size_t pos;
 		s = fread(buf, 1, 4, input);
 		if (s == 0)
 			break;
@@ -161,15 +186,30 @@ int main(int argc, char **argv)
 			fprintf(stderr, "! unable to read header\n");
 			break;
 		}
+		pos = 4;
 		cmd = WORD(buf[0], buf[1]);
-		len = WORD(buf[2], buf[3]);
-		fprintf(stderr, "CMD %04X len=%u\n", cmd, len);
-		if (fread(buf + 4, 1, len - 4, input) != len - 4) {
-			fprintf(stderr, "! unable to read %u bytes\n");
+		switch (cmd) {
+		case 0x8200:
+			fread(buf + pos, 1, 4, input);
+			pos += 4;
+			len = WORD(buf[6], buf[7]);
+			len <<= 16;
+			len += WORD(buf[4], buf[5]);
+			break;
+		default:
+			len = WORD(buf[2], buf[3]);
 			break;
 		}
-		dispatch(cmd, buf + 4, len - 4);
+		fprintf(stderr, "CMD %04X len=%u\n", cmd, len);
+		if (fread(buf + pos, 1, len - pos, input) != len - pos) {
+			fprintf(stderr, "! unable to read %u bytes\n", len - pos);
+			break;
+		}
+		dispatch(cmd, buf + pos, len - pos);
 	}
+
+	if (page.size)
+		page_output();
 
 	if (argc > 1)
 		fclose(input);

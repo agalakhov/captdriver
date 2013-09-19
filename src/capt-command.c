@@ -28,9 +28,6 @@
 #include <cups/cups.h>
 #include <cups/sidechannel.h>
 
-/* TODO remove this */
-FILE *capt_debug_file = NULL;
-
 static uint8_t capt_iobuf[0x10000];
 static size_t  capt_iosize;
 
@@ -66,10 +63,6 @@ static void capt_send_buf(void)
 		size_t sendsize = iosize;
 		if (sendsize > 4096)
 			sendsize = 4096;
-
-		/* TODO remove this */
-		if (capt_debug_file)
-			fwrite(iopos, 1, sendsize, capt_debug_file);
 
 		fwrite(iopos, 1, sendsize, stdout);
 		iopos += sendsize;

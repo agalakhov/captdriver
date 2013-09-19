@@ -118,9 +118,6 @@ static void lbp2900_page_prologue(struct printer_state_s *state, const struct pa
 
 	(void) state;
 
-	/* TODO remove this */
-	capt_debug_file = fopen("/tmp/capt-debug.bin", "w");
-
 	capt_multi_begin(CAPT_SET_PARMS);
 	capt_multi_add(CAPT_SET_PARM_PAGE, pageparms, sizeof(pageparms));
 	s = hiscoa_format_params(buf, sizeof(buf), &hiscoa_default_params);

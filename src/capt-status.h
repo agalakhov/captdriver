@@ -21,33 +21,46 @@
 
 #include "std.h"
 
-enum capt_status_flags
-{
-	/* [R1][0][0][0]-[R2][0][R3][XS]-[BU][0][NR1][NR2]-[?][PR][NP][NR] */
+struct capt_status {
+	uint16_t status[7];
 
-	CAPT_ST_NR  = (1 << 0),
-	CAPT_ST_NR3 = (1 << 1),
-	CAPT_ST_PR  = (1 << 2),
-	/* ? = (1 << 3), */
-
-	CAPT_ST_NR2 = (1 << 4),
-	CAPT_ST_NR1 = (1 << 5),
-	/* 0 = (1 << 6), */
-	CAPT_ST_BU  = (1 << 7),
-
-	CAPT_ST_XS  = (1 << 8),
-	CAPT_ST_R3  = (1 << 9),
-	/* 0 = (1 << 10), */
-	CAPT_ST_R2  = (1 << 11),
-
-	/* 0 = (1 << 12), */
-	/* 0 = (1 << 13), */
-	/* 0 = (1 << 14), */
-	CAPT_ST_R1  = (1 << 15)
+	uint16_t page_decoding;
+	uint16_t page_printing;
+	uint16_t page_out;
+	uint16_t page_completed;
 };
 
-uint16_t capt_get_status(void);
-uint16_t capt_get_xstatus(void);
+#define _FL(s, b) ((s << 16) | (1 << b))
+enum capt_flags
+{
+	/* status[0] */
+	CAPT_FL_READY1       = _FL(0, 15), /* ? */
+	CAPT_FL_READY2       = _FL(0, 12), /* ? */
+	CAPT_FL_JOBSTAT_CHNG = _FL(0, 9),
+	CAPT_FL_XSTATUS_CHNG = _FL(0, 8),
+	CAPT_FL_BUSY         = _FL(0, 7),
+	CAPT_FL_UNINIT1      = _FL(0, 5),
+	CAPT_FL_UNINIT2      = _FL(0, 4),
+	CAPT_FL_BUFFERFULL   = _FL(0, 2),
+	CAPT_FL_NOPAPER1     = _FL(0, 1),
+	CAPT_FL_PROCESSING   = _FL(0, 0),
+	/* status[1] */
+	/* status[2] */
+	CAPT_FL_nERROR       = _FL(2, 7),
+	CAPT_FL_BUTTON       = _FL(2, 8),
+	/* status[3] */
+	CAPT_FL_POWERUP      = _FL(3, 12),
+	/* status[4] */
+	/* status[5] */
+	/* status[6] */
+};
+#undef _FL
+
+static inline bool FLAG(const struct capt_status *status, enum capt_flags flag)
+{
+	return !! (status->status[flag >> 16] & (flag & 0xFFFF));
+}
+
+const struct capt_status *capt_get_status(void);
+const struct capt_status *capt_get_xstatus(void);
 void capt_wait_ready(void);
-const uint8_t *capt_get_status_rec(void);
-uint16_t capt_get_status_size(void);

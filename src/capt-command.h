@@ -22,8 +22,8 @@
 #include "std.h"
 
 enum capt_command {
-	CAPT_NOP        = 0xA0A0,
-	CAPT_CHKFLAGS   = 0xA0A1,
+	CAPT_NOP        = 0xA0A0, /* ? */
+	CAPT_CHKJOBSTAT = 0xA0A1,
 	CAPT_CHKXSTATUS = 0xA0A8,
 
 	CAPT_IEEE_IDENT = 0xA1A0, /* raw reply */

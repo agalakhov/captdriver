@@ -66,20 +66,12 @@ static const uint8_t magicbuf_2[] = {
 
 static void wait_page(unsigned ipage)
 {
-	uint16_t pg;
-	const uint8_t *srec;
-	do {
+	while (1) {
 		capt_wait_ready();
-		capt_get_xstatus();
-		if (capt_get_status_size() < 20) {
-			fprintf(stderr, "ERROR: CAPT: printer returned only %u bytes of status\n",
-					capt_get_status_size());
-			exit(1);
-		}
-		srec = capt_get_status_rec();
-		pg = WORD(srec[18], srec[19]);
+		if (capt_get_xstatus()->page_out >= ipage)
+			break;
 		sleep(1);
-	} while (pg < ipage);
+	}
 }
 
 static void lbp2900_job_prologue(struct printer_state_s *state)
@@ -142,6 +134,7 @@ static void lbp2900_page_epilogue(struct printer_state_s *state, const struct pa
 {
 	uint8_t buf[2] = { LO(state->ipage), HI(state->ipage) };
 	(void) dims;
+	capt_send(CAPT_PRINT_DATA_END, NULL, 0);
 	capt_sendrecv(CAPT_FIRE, buf, 2, NULL, 0);
 	wait_page(state->ipage);
 }

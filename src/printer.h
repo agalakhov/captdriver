@@ -33,6 +33,7 @@ struct page_dims_s;
 
 struct printer_state_s {
 	const struct printer_ops_s *ops;
+	struct page_queue_s *page_queue;
 	unsigned ipage;
 	unsigned iband;
 	unsigned isend;
@@ -45,8 +46,8 @@ struct printer_ops_s {
 	void (*job_epilogue) (struct printer_state_s *state);
 	void (*page_setup) (struct printer_state_s *state,
 		struct page_dims_s *dims, unsigned width, unsigned height);
-	void (*page_prologue) (struct printer_state_s *state, const struct page_dims_s *dims);
-	void (*page_epilogue) (struct printer_state_s *state, const struct page_dims_s *dims);
+	bool (*page_prologue) (struct printer_state_s *state, const struct page_dims_s *dims);
+	bool (*page_epilogue) (struct printer_state_s *state, const struct page_dims_s *dims);
 	void (*send_band) (struct printer_state_s *state,
 		const void *band, unsigned line_size, unsigned num_lines);
 };

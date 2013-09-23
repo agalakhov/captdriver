@@ -84,7 +84,7 @@ static void lbp2900_job_prologue(struct printer_state_s *state)
 	capt_wait_ready();
 }
 
-static void lbp2900_page_prologue(struct printer_state_s *state, const struct page_dims_s *dims)
+static bool lbp2900_page_prologue(struct printer_state_s *state, const struct page_dims_s *dims)
 {
 	size_t s;
 	uint8_t buf[16];
@@ -120,20 +120,23 @@ static void lbp2900_page_prologue(struct printer_state_s *state, const struct pa
 	capt_multi_add(CAPT_SET_PARM_1, NULL, 0);
 	capt_multi_add(CAPT_SET_PARM_2, NULL, 0);
 	capt_multi_send();
+
+	return true;
 }
 
-static void lbp2900_page_epilogue(struct printer_state_s *state, const struct page_dims_s *dims)
+static bool lbp2900_page_epilogue(struct printer_state_s *state, const struct page_dims_s *dims)
 {
 	uint8_t buf[2] = { LO(state->ipage), HI(state->ipage) };
 	(void) dims;
 	capt_send(CAPT_PRINT_DATA_END, NULL, 0);
 	capt_sendrecv(CAPT_FIRE, buf, 2, NULL, 0);
 	capt_wait_ready();
+
 	while (1) {
 		const struct capt_status_s *status = capt_get_xstatus();
 		/* Interesting. Using page_printing here results in shifted print */
 		if (status->page_out >= state->ipage)
-			break;
+			return true;
 		if (FLAG(status, CAPT_FL_NOPAPER2)) {
 			fprintf(stderr, "DEBUG: CAPT: no paper\n");
 		}

@@ -21,7 +21,7 @@
 
 #include "std.h"
 
-struct capt_status {
+struct capt_status_s {
 	uint16_t status[7];
 
 	uint16_t page_decoding;
@@ -56,11 +56,11 @@ enum capt_flags
 };
 #undef _FL
 
-static inline bool FLAG(const struct capt_status *status, enum capt_flags flag)
+static inline bool FLAG(const struct capt_status_s *status, enum capt_flags flag)
 {
 	return !! (status->status[flag >> 16] & (flag & 0xFFFF));
 }
 
-const struct capt_status *capt_get_status(void);
-const struct capt_status *capt_get_xstatus(void);
+const struct capt_status_s *capt_get_status(void);
+const struct capt_status_s *capt_get_xstatus(void);
 void capt_wait_ready(void);

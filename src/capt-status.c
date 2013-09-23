@@ -26,7 +26,7 @@
 #include <string.h>
 #include <unistd.h>
 
-static struct capt_status status;
+static struct capt_status_s status;
 
 static void decode_status(const uint8_t *s, size_t size)
 {
@@ -68,13 +68,13 @@ void capt_init_status(void)
 	memset(&status, 0, sizeof(status));
 }
 
-const struct capt_status *capt_get_status(void)
+const struct capt_status_s *capt_get_status(void)
 {
 	download_status(CAPT_CHKSTATUS);
 	return &status;
 }
 
-const struct capt_status *capt_get_xstatus(void)
+const struct capt_status_s *capt_get_xstatus(void)
 {
 	download_status(CAPT_CHKSTATUS);
 	if (FLAG(&status, CAPT_FL_XSTATUS_CHNG))

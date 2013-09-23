@@ -70,14 +70,16 @@ static void capt_send_buf(void)
 		fflush(stdout);
 
 		status = cupsSideChannelDoRequest(CUPS_SC_CMD_DRAIN_OUTPUT,
-				(char *) tmpbuf, (int *) &tmpsize, 5.0);
+				(char *) tmpbuf, (int *) &tmpsize, 1.0);
 		if (status != CUPS_SC_STATUS_OK) {
-			fprintf(stderr, "ERROR: CAPT: no reply from backend ERR: %d\n",
-				(int) status);
-			if (status != CUPS_SC_STATUS_TIMEOUT)
+			if (status == CUPS_SC_STATUS_TIMEOUT) {
+				/* Overcome race conditions in usb backend */
+				fprintf(stderr, "DEBUG: CAPT: output already empty, not drained\n");
+			} else {
+				fprintf(stderr, "ERROR: CAPT: no reply from backend, err=%i\n",
+					(int) status);
 				exit(1);
-			else
-				fprintf(stderr, "WARN: CAPT: skip timeout error\n");
+			}
 		}
 	}
 }

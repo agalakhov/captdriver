@@ -23,10 +23,31 @@
 #include "word.h"
 #include "capt-command.h"
 
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
 static struct capt_status_s status;
+
+static inline char bit(enum capt_flags flag)
+{
+	return FLAG(&status, flag) ? '1' : '0';
+}
+
+static void print_status(void)
+{
+	fprintf(stderr, "DEBUG: CAPT: printer status P1=%c P2=%c B=%c B1=%c nE=%c\n",
+		bit(CAPT_FL_NOPAPER1), bit(CAPT_FL_NOPAPER2),
+		bit(CAPT_FL_BUTTON), bit(CAPT_FL_BUTTON1),
+		bit(CAPT_FL_nERROR)
+	);
+	fprintf(stderr, "DEBUG: CAPT: pages %u/%u/%u/%u\n",
+		status.page_decoding,
+		status.page_printing,
+		status.page_out,
+		status.page_completed
+	);
+}
 
 static void decode_status(const uint8_t *s, size_t size)
 {
@@ -77,8 +98,10 @@ const struct capt_status_s *capt_get_status(void)
 const struct capt_status_s *capt_get_xstatus(void)
 {
 	download_status(CAPT_CHKSTATUS);
-	if (FLAG(&status, CAPT_FL_XSTATUS_CHNG))
+	if (FLAG(&status, CAPT_FL_XSTATUS_CHNG)) {
 		download_status(CAPT_CHKXSTATUS);
+		print_status();
+	}
 	return &status;
 }
 

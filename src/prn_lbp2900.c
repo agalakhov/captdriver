@@ -35,10 +35,10 @@
 
 static void send_job_start()
 {
-	uint16_t page = 1; // FIXME
+	uint16_t page = 1; /* nobody cares */
 	uint8_t nl = 16;
 	uint8_t fg = 0x01;
-	uint16_t job = 1;
+	uint16_t job = 1;  /* nobody cares */
 	time_t rawtime = time(NULL);
 	const struct tm *tm = localtime(&rawtime);
 	uint8_t buf[32 + 64 + nl];

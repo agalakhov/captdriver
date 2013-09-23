@@ -45,11 +45,16 @@ enum capt_flags
 	CAPT_FL_NOPAPER1     = _FL(0, 1),
 	CAPT_FL_PROCESSING   = _FL(0, 0),
 	/* status[1] */
+	CAPT_FL_NOPAPER2     = _FL(1, 14),
+	CAPT_FL_PROCESSING1  = _FL(1, 7),
+	CAPT_FL_BUTTON       = _FL(1, 5),
+	CAPT_FL_PRINTING     = _FL(1, 2),
+	CAPT_FL_POWERUP      = _FL(1, 0),
 	/* status[2] */
 	CAPT_FL_nERROR       = _FL(2, 7),
-	CAPT_FL_BUTTON       = _FL(2, 8),
+	CAPT_FL_BUTTON1      = _FL(2, 8),
 	/* status[3] */
-	CAPT_FL_POWERUP      = _FL(3, 12),
+	CAPT_FL_POWERUP1     = _FL(3, 12),
 	/* status[4] */
 	/* status[5] */
 	/* status[6] */

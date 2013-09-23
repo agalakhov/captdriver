@@ -29,7 +29,7 @@ enum capt_command {
 	CAPT_IEEE_IDENT = 0xA1A0, /* raw reply */
 	CAPT_IDENT      = 0xA1A1,
 
-	CAPT_UPLOAD_0   = 0xA2A0,
+	CAPT_JOB_BEGIN  = 0xA2A0,
 
 	CAPT_START_0    = 0xA3A2,
 

@@ -119,14 +119,29 @@ Status bits:
    5-4:   Uninitialized (not ready), reset by 0xE0A5
      3:   ?
      2:   1 = buffer full (do not send data), 0 = buffer empty
-     1:   Paper out?
+     1:   Paper out (reset by Cancel or auto)
      0:   Processing job
 
   STATUS1
+    15:   0
+    14:   Paper out (reset by Reset)
+  13-8:   0
+     7:   Processing data
+   6-3:   ? 0
+     2:   Printing
+     1:   ? 0
+     0:   Powering up
 
   STATUS2
+  15-9:   0
+     8:   Paper button pressed
+     7:   Problem
+   6-0:   0
 
   STATUS3
+  15-13:  0
+     12:  Powering up
+   11-0:  0
 
   STATUS4
 

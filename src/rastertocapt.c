@@ -143,9 +143,7 @@ static void do_print(int fd)
 	while (cupsRasterReadHeader2(raster, &header)) {
 		struct page_dims_s dims;
 
-		// FIXME
-		dims.paper_width = 4960;
-		dims.paper_height = 6898;
+		page_set_dims(&dims, &header);
 
 		if (! state->ipage) {
 			fprintf(stderr, "DEBUG: CAPT: rastertocapt: start job\n");

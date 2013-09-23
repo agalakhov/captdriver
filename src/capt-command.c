@@ -72,8 +72,12 @@ static void capt_send_buf(void)
 		status = cupsSideChannelDoRequest(CUPS_SC_CMD_DRAIN_OUTPUT,
 				(char *) tmpbuf, (int *) &tmpsize, 5.0);
 		if (status != CUPS_SC_STATUS_OK) {
-			fprintf(stderr, "ERROR: CAPT: no reply from backend\n");
-			exit(1);
+			fprintf(stderr, "ERROR: CAPT: no reply from backend ERR: %d\n",
+				(int) status);
+			if (status != CUPS_SC_STATUS_TIMEOUT)
+				exit(1);
+			else
+				fprintf(stderr, "WARN: CAPT: skip timeout error\n");
 		}
 	}
 }

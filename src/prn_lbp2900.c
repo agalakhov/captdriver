@@ -64,22 +64,11 @@ static const uint8_t magicbuf_2[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-static void wait_page(unsigned ipage)
-{
-	while (1) {
-		capt_wait_ready();
-		if (capt_get_xstatus()->page_out >= ipage)
-			break;
-		sleep(1);
-	}
-}
-
 static void lbp2900_job_prologue(struct printer_state_s *state)
 {
 	(void) state;
 	capt_sendrecv(CAPT_IDENT, NULL, 0, NULL, 0);
 	sleep(1);
-	capt_sendrecv(CAPT_CHKXSTATUS, NULL, 0, NULL, 0);
 	capt_get_xstatus();
 
 	capt_sendrecv(CAPT_START_0, NULL, 0, NULL, 0);
@@ -118,6 +107,12 @@ static void lbp2900_page_prologue(struct printer_state_s *state, const struct pa
 
 	(void) state;
 
+	while (1) {
+		if (! FLAG(capt_get_xstatus(), CAPT_FL_BUFFERFULL))
+			break;
+		sleep(1);
+	}
+
 	capt_multi_begin(CAPT_SET_PARMS);
 	capt_multi_add(CAPT_SET_PARM_PAGE, pageparms, sizeof(pageparms));
 	s = hiscoa_format_params(buf, sizeof(buf), &hiscoa_default_params);
@@ -133,13 +128,31 @@ static void lbp2900_page_epilogue(struct printer_state_s *state, const struct pa
 	(void) dims;
 	capt_send(CAPT_PRINT_DATA_END, NULL, 0);
 	capt_sendrecv(CAPT_FIRE, buf, 2, NULL, 0);
-	wait_page(state->ipage);
+	capt_wait_ready();
+	while (1) {
+		const struct capt_status_s *status = capt_get_xstatus();
+		/* Interesting. Using page_printing here results in shifted print */
+		if (status->page_out >= state->ipage)
+			break;
+		if (FLAG(status, CAPT_FL_NOPAPER2)) {
+			fprintf(stderr, "DEBUG: CAPT: no paper\n");
+		}
+		if (FLAG(status, CAPT_FL_BUTTON)) {
+			fprintf(stderr, "DEBUG: CAPT: button pressed\n");
+		}
+		sleep(1);
+	}
 }
 
 static void lbp2900_job_epilogue(struct printer_state_s *state)
 {
 	uint8_t buf[2] = { LO(state->ipage), HI(state->ipage) };
 	capt_sendrecv(CAPT_JOB_END, buf, 2, NULL, 0);
+	while (1) {
+		if (capt_get_xstatus()->page_completed >= state->ipage)
+			break;
+		sleep(1);
+	}
 }
 
 static void lbp2900_page_setup(struct printer_state_s *state,

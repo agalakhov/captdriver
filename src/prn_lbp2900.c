@@ -139,9 +139,9 @@ static bool lbp2900_page_epilogue(struct printer_state_s *state, const struct pa
 			return true;
 		if (FLAG(status, CAPT_FL_NOPAPER2)) {
 			fprintf(stderr, "DEBUG: CAPT: no paper\n");
-		}
-		if (FLAG(status, CAPT_FL_BUTTON)) {
-			fprintf(stderr, "DEBUG: CAPT: button pressed\n");
+			if (FLAG(status, CAPT_FL_PRINTING) || FLAG(status, CAPT_FL_PROCESSING1))
+				continue;
+			return false;
 		}
 		sleep(1);
 	}
@@ -179,6 +179,19 @@ static void lbp2900_page_setup(struct printer_state_s *state,
 		dims->num_lines = height;
 }
 
+static void lbp2900_wait_user(struct printer_state_s *state)
+{
+	(void) state;
+	while (1) {
+		const struct capt_status_s *status = capt_get_xstatus();
+		if (FLAG(status, CAPT_FL_BUTTON)) {
+			fprintf(stderr, "DEBUG: CAPT: button pressed\n");
+			break;
+		}
+		sleep(1);
+	}
+}
+
 static struct printer_ops_s lbp2900_ops = {
 	.job_prologue = lbp2900_job_prologue,
 	.job_epilogue = lbp2900_job_epilogue,
@@ -186,6 +199,7 @@ static struct printer_ops_s lbp2900_ops = {
 	.page_prologue = lbp2900_page_prologue,
 	.page_epilogue = lbp2900_page_epilogue,
 	.send_band = ops_send_band_hiscoa,
+	.wait_user = lbp2900_wait_user,
 };
 
 register_printer("LBP2900", lbp2900_ops, WORKS);

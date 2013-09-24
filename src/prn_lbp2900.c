@@ -69,6 +69,7 @@ static void lbp2900_job_prologue(struct printer_state_s *state)
 	(void) state;
 	capt_sendrecv(CAPT_IDENT, NULL, 0, NULL, 0);
 	sleep(1);
+	capt_init_status();
 	capt_get_xstatus();
 
 	capt_sendrecv(CAPT_START_0, NULL, 0, NULL, 0);

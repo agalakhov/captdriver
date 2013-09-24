@@ -33,16 +33,12 @@
 #include <time.h>
 #include <unistd.h>
 
-static const uint8_t magicbuf_0[] = {
-	0x00, 0x00, 0x1E, 0x00, 0x00, 0x00, 0x00, 0x00
-};
-
 static void send_job_start()
 {
-	uint16_t page = 1; // FIXME
+	uint16_t page = 1; /* nobody cares */
 	uint8_t nl = 16;
 	uint8_t fg = 0x01;
-	uint16_t job = 1;
+	uint16_t job = 1;  /* nobody cares */
 	time_t rawtime = time(NULL);
 	const struct tm *tm = localtime(&rawtime);
 	uint8_t buf[32 + 64 + nl];
@@ -59,6 +55,10 @@ static void send_job_start()
 	capt_sendrecv(CAPT_JOB_SETUP, buf, sizeof(buf), NULL, 0);
 }
 
+static const uint8_t magicbuf_0[] = {
+	0x00, 0x00, 0x1E, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
 static const uint8_t magicbuf_2[] = {
 	0xEE, 0xDB, 0xEA, 0xAD, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
@@ -72,7 +72,7 @@ static void lbp2900_job_prologue(struct printer_state_s *state)
 	capt_get_xstatus();
 
 	capt_sendrecv(CAPT_START_0, NULL, 0, NULL, 0);
-	capt_sendrecv(CAPT_UPLOAD_0, magicbuf_0, ARRAY_SIZE(magicbuf_0), NULL, 0);
+	capt_sendrecv(CAPT_JOB_BEGIN, magicbuf_0, ARRAY_SIZE(magicbuf_0), NULL, 0);
 	capt_wait_ready();
 	send_job_start();
 	capt_wait_ready();

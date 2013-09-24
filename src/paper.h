@@ -21,6 +21,8 @@
 
 #include "std.h"
 
+struct cups_page_header2_s;
+
 struct page_dims_s {
 	/* set by */
 	unsigned paper_width;
@@ -30,3 +32,5 @@ struct page_dims_s {
 	unsigned band_size;
 	unsigned num_lines;
 };
+
+void page_set_dims(struct page_dims_s *dims, const struct cups_page_header2_s *header);

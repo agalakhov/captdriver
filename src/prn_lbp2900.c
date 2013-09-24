@@ -149,13 +149,13 @@ static bool lbp2900_page_epilogue(struct printer_state_s *state, const struct pa
 
 static void lbp2900_job_epilogue(struct printer_state_s *state)
 {
-	uint8_t buf[2] = { LO(state->ipage), HI(state->ipage) };
-	capt_sendrecv(CAPT_JOB_END, buf, 2, NULL, 0);
+	uint8_t buf[2] = { LO(state->ipage), HI(state->ipage) };	
 	while (1) {
-		if (capt_get_xstatus()->page_out >= state->ipage)
+		if (capt_get_xstatus()->page_completed >= state->ipage)
 			break;
 		sleep(1);
 	}
+	capt_sendrecv(CAPT_JOB_END, buf, 2, NULL, 0);
 }
 
 static void lbp2900_page_setup(struct printer_state_s *state,

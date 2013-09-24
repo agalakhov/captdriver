@@ -198,6 +198,7 @@ static struct printer_ops_s lbp2900_ops = {
 	.page_setup = lbp2900_page_setup,
 	.page_prologue = lbp2900_page_prologue,
 	.page_epilogue = lbp2900_page_epilogue,
+	.compress_band = ops_compress_band_hiscoa,
 	.send_band = ops_send_band_hiscoa,
 	.wait_user = lbp2900_wait_user,
 };

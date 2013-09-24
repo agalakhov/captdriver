@@ -28,32 +28,27 @@
 
 #include <stdlib.h>
 
-void ops_send_band_hiscoa(struct printer_state_s *state,
-		const void *data, unsigned line_size, unsigned num_lines)
+size_t ops_compress_band_hiscoa(struct printer_state_s *state,
+		void *band, size_t size,
+		const void *pixels, unsigned line_size, unsigned num_lines)
 {
-	const uint8_t *band_ptr;
-	size_t band_size;
-	void *band_buf = calloc(2 * line_size, num_lines);
-	if (! band_buf)
-		abort();
+	(void) state;
+	return hiscoa_compress_band(band, size, pixels, line_size, num_lines,
+					0, &hiscoa_default_params);
+}
 
-	// FIXME
-	band_size = hiscoa_compress_band(band_buf, 2 * line_size * num_lines,
-						data, line_size, num_lines,
-						0, &hiscoa_default_params);
-
-	band_ptr = band_buf;
-	while (band_size) {
+void ops_send_band_hiscoa(struct printer_state_s *state, const void *data, size_t size)
+{
+	const uint8_t *pdata = (const uint8_t *) data;
+	while (size) {
 		size_t send = 0xFF00;
-		if (send > band_size)
-			send = band_size;
+		if (send > size)
+			send = size;
 		state->isend += 1;
 		if (state->isend % 16 == 0)
 			capt_wait_ready();
-		capt_send(CAPT_PRINT_DATA, band_ptr, send);
-		band_ptr += send;
-		band_size -= send;
+		capt_send(CAPT_PRINT_DATA, pdata, send);
+		pdata += send;
+		size -= send;
 	}
-
-	free(band_buf);
 }

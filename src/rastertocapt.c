@@ -30,6 +30,20 @@
 #include <cups/raster.h>
 
 
+struct cached_page_s {
+	struct page_dims_s dims;
+	struct band_list_s *bands;
+};
+
+struct band_list_s {
+	struct band_list_s *next;
+	size_t size;
+	uint8_t data[];
+};
+static inline size_t sizeof_struct_band_list_s(size_t size)
+	{ return sizeof(struct band_list_s) + size; }
+
+
 static size_t center_pixels(size_t small, size_t large, unsigned bpp)
 {
 	unsigned small_p;
@@ -43,15 +57,20 @@ static size_t center_pixels(size_t small, size_t large, unsigned bpp)
 	return bypp * ((large_p - small_p) / 2);
 }
 
-static void send_page_data(struct printer_state_s *state,
-		const struct page_dims_s *dims,
+static void compress_page_data(struct printer_state_s *state,
+		struct cached_page_s *page,
 		cups_raster_t *raster,
 		const struct cups_page_header2_s *header)
 {
-	const struct printer_ops_s *ops = state->ops;
+	const struct page_dims_s *dims = &page->dims;
+	const unsigned compsize = 2 * dims->line_size * dims->band_size;
 	uint8_t *linebuf = NULL;
 	uint8_t *bandbuf = NULL;
+	uint8_t *compbuf = NULL;
+
+	struct band_list_s *last_band = NULL;
 	unsigned i;
+	unsigned iband;
 
 	unsigned shiftb = 0;
 	unsigned shiftl = 0;
@@ -84,13 +103,16 @@ static void send_page_data(struct printer_state_s *state,
 	bandbuf = calloc(dims->line_size, dims->band_size);
 	if (! bandbuf)
 		abort();
+	compbuf = calloc(1, compsize);
+	if (! compbuf)
+		abort();
 
-	state->isend = 0;
-
-	for (state->iband = 0; state->iband * dims->band_size < dims->num_lines; ++state->iband) {
-		unsigned start = state->iband * dims->band_size;
+	for (iband = 0; iband * dims->band_size < dims->num_lines; ++iband) {
+		struct band_list_s *new_band;
+		unsigned start = iband * dims->band_size;
 		unsigned nlines = dims->band_size;
 		unsigned iline;
+		size_t size;
 		memset(bandbuf, 0, dims->line_size * dims->band_size);
 		if (nlines + start >= dims->num_lines)
 			nlines = dims->num_lines - start;
@@ -106,25 +128,49 @@ static void send_page_data(struct printer_state_s *state,
 			}
 			memcpy(bandbuf + iline * dims->line_size + shiftb, linebuf + shiftl, csize);
 		}
-		ops->send_band(state, bandbuf, dims->line_size, nlines);
+		size = state->ops->compress_band(state, compbuf, compsize, bandbuf, dims->line_size, nlines);
+		new_band = calloc(1, sizeof_struct_band_list_s(size));
+		if (! new_band)
+			abort();
+		new_band->size = size;
+		if (size)
+			memcpy(new_band->data, compbuf, size);
+		if (! page->bands)
+			page->bands = new_band;
+		if (last_band)
+			last_band->next = new_band;
+		last_band = new_band;
 	}
 
 	/* discard end of image, if any */
 	for (i = dims->num_lines; i < header->cupsHeight; ++i)
 		cupsRasterReadPixels(raster, linebuf, header->cupsBytesPerLine);
 
+	if (compbuf)
+		free(compbuf);
 	if (bandbuf)
 		free(bandbuf);
 	if (linebuf)
 		free(linebuf);
 }
 
+static void send_page_data(struct printer_state_s *state, const struct cached_page_s *page)
+{
+	const struct band_list_s *band;
+
+	state->isend = 0;
+	state->iband = 0;
+
+	for (band = page->bands; band; band = band->next, ++state->iband)
+		state->ops->send_band(state, band->data, band->size);
+}
 
 static void do_print(int fd)
 {
-	struct cups_page_header2_s header;
 	const struct printer_ops_s *ops;
 	struct printer_state_s *state = NULL;
+	struct cached_page_s *cached_page = NULL;
+	bool in_job = false;
 	cups_raster_t *raster;
 
 	ops = printer_detect();
@@ -140,37 +186,83 @@ static void do_print(int fd)
 
 	fprintf(stderr, "DEBUG: CAPT: rastertocapt is rendering\n");
 
-	while (cupsRasterReadHeader2(raster, &header)) {
-		struct page_dims_s dims;
+	while (1) {
+		bool page_printed = false;
 
-		page_set_dims(&dims, &header);
+		if (! cached_page) {
+			struct cups_page_header2_s header;
 
-		if (! state->ipage) {
+			if (! cupsRasterReadHeader2(raster, &header))
+				break; /* no more pages */
+
+			cached_page = calloc(1, sizeof(struct cached_page_s));
+			if (! cached_page)
+				abort();
+
+			state->ipage += 1;
+
+			page_set_dims(&cached_page->dims, &header);
+
+			ops->page_setup(state, &cached_page->dims,
+					header.cupsWidth, header.cupsHeight);
+
+			compress_page_data(state, cached_page, raster, &header);
+		}
+
+		if (! in_job) {
 			fprintf(stderr, "DEBUG: CAPT: rastertocapt: start job\n");
 			if (ops->job_prologue)
 				ops->job_prologue(state);
+			in_job = true;
 		}
 
-		state->ipage += 1;
-
-		ops->page_setup(state, &dims, header.cupsWidth, header.cupsHeight);
-
 		fprintf(stderr, "DEBUG: CAPT: rastertocapt: start page %u\n", state->ipage);
-		if (ops->page_prologue)
-			ops->page_prologue(state, &dims);
+		if (ops->page_prologue) {
+			bool ok = ops->page_prologue(state, &cached_page->dims);
+			if (! ok) {
+				fprintf(stderr, "DEBUG: CAPT: rastertocapt: can't start page\n");
+				ops->wait_user(state);
+				if (in_job) {
+					fprintf(stderr, "DEBUG: CAPT: rastertocapt: retry job\n");
+					if (ops->job_epilogue)
+						ops->job_epilogue(state);
+					in_job = false;
+				}
+				continue;
+			}
+		}
 
 		fprintf(stderr, "DEBUG: CAPT: rastertocapt: sending page data\n");
-		send_page_data(state, &dims, raster, &header);
+		send_page_data(state, cached_page);
 
 		fprintf(stderr, "DEBUG: CAPT: rastertocapt: end page %u\n", state->ipage);
-		if (ops->page_epilogue)
-			ops->page_epilogue(state, &dims);
+		if (ops->page_epilogue) {
+			bool ok = ops->page_epilogue(state, &cached_page->dims);
+			if (! ok) {
+				fprintf(stderr, "DEBUG: CAPT: rastertocapt: page not printed\n");
+				ops->wait_user(state);
+				continue;
+			}
+		}
+
+		page_printed = true;
+
+		if (page_printed) {
+			while (cached_page->bands) {
+				void *p = cached_page->bands;
+				cached_page->bands = cached_page->bands->next;
+				free(p);
+			}
+			free(cached_page);
+			cached_page = NULL;
+		}
 	}
 
-	if (state->ipage) {
+	if (in_job) {
 		fprintf(stderr, "DEBUG: CAPT: rastertocapt: end job\n");
 		if (ops->job_epilogue)
 			ops->job_epilogue(state);
+		in_job = false;
 	}
 
 	if (! state->ipage)

@@ -23,5 +23,8 @@
 
 struct printer_state_s;
 
-void ops_send_band_hiscoa(struct printer_state_s *state,
-	const void *data, unsigned line_size, unsigned num_lines);
+size_t ops_compress_band_hiscoa(struct printer_state_s *state,
+	void *band, size_t size,
+	const void *pixels, unsigned line_size, unsigned num_lines);
+
+void ops_send_band_hiscoa(struct printer_state_s *state, const void *data, size_t size);

@@ -77,16 +77,11 @@ static void lbp2900_job_prologue(struct printer_state_s *state)
 	capt_wait_ready();
 	send_job_start();
 	capt_wait_ready();
-	capt_sendrecv(CAPT_START_1, NULL, 0, NULL, 0);
-	capt_sendrecv(CAPT_START_2, NULL, 0, NULL, 0);
-	capt_sendrecv(CAPT_START_3, NULL, 0, NULL, 0);
-	capt_wait_ready();
-	capt_sendrecv(CAPT_UPLOAD_2, magicbuf_2, ARRAY_SIZE(magicbuf_2), NULL, 0);
-	capt_wait_ready();
 }
 
 static bool lbp2900_page_prologue(struct printer_state_s *state, const struct page_dims_s *dims)
 {
+	const struct capt_status_s *status;
 	size_t s;
 	uint8_t buf[16];
 
@@ -107,6 +102,16 @@ static bool lbp2900_page_prologue(struct printer_state_s *state, const struct pa
 	};
 
 	(void) state;
+
+	status = capt_get_xstatus();
+	if (FLAG(status, CAPT_FL_UNINIT1) || FLAG(status, CAPT_FL_UNINIT2)) {
+		capt_sendrecv(CAPT_START_1, NULL, 0, NULL, 0);
+		capt_sendrecv(CAPT_START_2, NULL, 0, NULL, 0);
+		capt_sendrecv(CAPT_START_3, NULL, 0, NULL, 0);
+		capt_wait_ready();
+		capt_sendrecv(CAPT_UPLOAD_2, magicbuf_2, ARRAY_SIZE(magicbuf_2), NULL, 0);
+		capt_wait_ready();
+	}
 
 	while (1) {
 		if (! FLAG(capt_get_xstatus(), CAPT_FL_BUFFERFULL))

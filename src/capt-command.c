@@ -153,10 +153,17 @@ void capt_sendrecv(uint16_t cmd, const void *buf, size_t size, void *reply, size
 		capt_debug_buf("ERROR", 6);
 		exit(1);
 	}
-	if (WORD(capt_iobuf[2], capt_iobuf[3]) > 6)
-		capt_recv_buf(6, WORD(capt_iobuf[2], capt_iobuf[3]) - 6);
-	if (WORD(capt_iobuf[2], capt_iobuf[3]) != capt_iosize &&
-	    BCD(capt_iobuf[2], capt_iobuf[3]) != capt_iosize) {
+	while (1) {
+		if (WORD(capt_iobuf[2], capt_iobuf[3]) == capt_iosize)
+			break;
+		if (BCD(capt_iobuf[2], capt_iobuf[3]) == capt_iosize)
+			break;
+		/* block at 64 byte boundary is not the last one */
+		if (WORD(capt_iobuf[2], capt_iobuf[3]) > capt_iosize && capt_iosize % 64 == 6) {
+			capt_recv_buf(6, WORD(capt_iobuf[2], capt_iobuf[3]) - capt_iosize);
+			continue;
+		}
+		/* we should never get here */
 		fprintf(stderr, "ERROR: CAPT: bad reply from printer, "
 				"expected size %02X %02X, got %02X %02X\n",
 				capt_iobuf[2], capt_iobuf[3], LO(capt_iosize), HI(capt_iosize));

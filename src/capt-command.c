@@ -160,7 +160,7 @@ void capt_sendrecv(uint16_t cmd, const void *buf, size_t size, void *reply, size
 			break;
 		/* block at 64 byte boundary is not the last one */
 		if (WORD(capt_iobuf[2], capt_iobuf[3]) > capt_iosize && capt_iosize % 64 == 6) {
-			capt_recv_buf(6, WORD(capt_iobuf[2], capt_iobuf[3]) - capt_iosize);
+			capt_recv_buf(capt_iosize, WORD(capt_iobuf[2], capt_iobuf[3]) - capt_iosize);
 			continue;
 		}
 		/* we should never get here */

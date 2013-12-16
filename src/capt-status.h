@@ -68,5 +68,7 @@ static inline bool FLAG(const struct capt_status_s *status, enum capt_flags flag
 
 void capt_init_status(void);
 const struct capt_status_s *capt_get_status(void);
+const struct capt_status_s *capt_get_xstatus_only(void);
 const struct capt_status_s *capt_get_xstatus(void);
 void capt_wait_ready(void);
+void capt_wait_xready(void);

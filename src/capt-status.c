@@ -95,18 +95,29 @@ const struct capt_status_s *capt_get_status(void)
 	return &status;
 }
 
+const struct capt_status_s *capt_get_xstatus_only(void)
+{
+	download_status(CAPT_CHKXSTATUS);
+	print_status();
+	return &status;
+}
+
 const struct capt_status_s *capt_get_xstatus(void)
 {
 	download_status(CAPT_CHKSTATUS);
-	if (FLAG(&status, CAPT_FL_XSTATUS_CHNG)) {
-		download_status(CAPT_CHKXSTATUS);
-		print_status();
-	}
+	if (FLAG(&status, CAPT_FL_XSTATUS_CHNG))
+		capt_get_xstatus_only();
 	return &status;
 }
 
 void capt_wait_ready(void)
 {
 	while (FLAG(capt_get_status(), CAPT_FL_BUSY))
+		sleep(1);
+}
+
+void capt_wait_xready(void)
+{
+	while (FLAG(capt_get_xstatus(), CAPT_FL_BUSY))
 		sleep(1);
 }

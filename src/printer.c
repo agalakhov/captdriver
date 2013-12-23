@@ -73,7 +73,7 @@ static const struct printer_ops_s *find_ops(const char *model, size_t size)
 		return NULL;
 	}
 	memcpy(mdl, model, size);
-	mdl[size + 1] = '\0';
+	mdl[size] = '\0';
 	fprintf(stderr, "DEBUG: CAPT: detected printer '%s'\n", mdl);
 
 	for (r = printer_recs; r; r = r->next) {

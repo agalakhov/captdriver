@@ -68,6 +68,7 @@ static void decode_status(const uint8_t *s, size_t size)
 	status.page_printing  = WORD(s[16], s[17]);
 	status.page_out       = WORD(s[18], s[19]);
 	status.page_completed = WORD(s[20], s[21]);
+	status.page_received  = WORD(s[34], s[35]);
 
 	status.status[4] = WORD(s[24], s[25]);
 

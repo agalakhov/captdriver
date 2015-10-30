@@ -28,6 +28,7 @@ struct capt_status_s {
 	uint16_t page_printing;
 	uint16_t page_out;
 	uint16_t page_completed;
+	uint16_t page_received;
 };
 
 #define _FL(s, b) ((s << 16) | (1 << b))

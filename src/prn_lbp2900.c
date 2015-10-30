@@ -86,6 +86,19 @@ static const uint8_t magicbuf_2[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
+static const uint8_t blinkonbuf[] = {
+        /* led */ 0x31, 0x00, 0x00, /* S6 */ 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* S7 */ 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00,
+};
+
+static const uint8_t blinkoffbuf[] = {
+        /* led */ 0x13, 0x00, 0x00, /* S6 */ 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* S7 */ 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00,
+};
+
+
 static void lbp2900_job_prologue(struct printer_state_s *state)
 {
 	(void) state;
@@ -100,7 +113,10 @@ static void lbp2900_job_prologue(struct printer_state_s *state)
 	capt_sendrecv(CAPT_START_0, NULL, 0, NULL, 0);
 	capt_sendrecv(CAPT_JOB_BEGIN, magicbuf_0, ARRAY_SIZE(magicbuf_0), buf, &size);
 	job=WORD(buf[2], buf[3]);
+
+	capt_sendrecv(CAPT_GPIO, blinkoffbuf, ARRAY_SIZE(blinkoffbuf), NULL, 0);
 	lbp2900_wait_ready(state->ops);
+
 	send_job_start(1,0);
 	lbp2900_wait_ready(state->ops);
 }
@@ -246,14 +262,25 @@ static void lbp2900_page_setup(struct printer_state_s *state,
 static void lbp2900_wait_user(struct printer_state_s *state)
 {
 	(void) state;
+
+	capt_sendrecv(CAPT_GPIO, blinkonbuf, ARRAY_SIZE(blinkonbuf), NULL, 0);
+	lbp2900_wait_ready(state->ops);
+
 	while (1) {
 		const struct capt_status_s *status = lbp2900_get_status(state->ops);
 		if (FLAG(status, CAPT_FL_BUTTON)) {
 			fprintf(stderr, "DEBUG: CAPT: button pressed\n");
+//			break;
+		}
+		if (FLAG(status, CAPT_FL_nERROR)) {
+			fprintf(stderr, "DEBUG: CAPT: virtual button pressed\n");
 			break;
 		}
 		sleep(1);
 	}
+
+	capt_sendrecv(CAPT_GPIO, blinkoffbuf, ARRAY_SIZE(blinkoffbuf), NULL, 0);
+	lbp2900_wait_ready(state->ops);
 }
 
 static struct lbp2900_ops_s lbp2900_ops = {

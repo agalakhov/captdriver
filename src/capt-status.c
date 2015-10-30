@@ -100,6 +100,13 @@ const struct capt_status_s *capt_get_xstatus_only(void)
 {
 	download_status(CAPT_CHKXSTATUS);
 	print_status();
+	/*
+	if (FLAG(&status, CAPT_FL_JOBSTAT_CHNG)) {
+	   capt_sendrecv(CAPT_CHKJOBSTAT, NULL, 0, NULL, 0);
+	   print_status();
+	}
+	*/
+
 	return &status;
 }
 
@@ -121,4 +128,10 @@ void capt_wait_xready(void)
 {
 	while (FLAG(capt_get_xstatus(), CAPT_FL_BUSY))
 		sleep(1);
+}
+
+void capt_wait_xready_only(void)
+{
+       while (FLAG(capt_get_xstatus_only(), CAPT_FL_BUSY))
+               sleep(1);
 }

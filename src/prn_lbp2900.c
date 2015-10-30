@@ -227,7 +227,7 @@ static void lbp2900_page_setup(struct printer_state_s *state,
 		unsigned width, unsigned height)
 {
 /*
-	A4		4736x6784
+	A4		4736x6778 or 4736x4520
 	Letter		4864x6368
 	Legal		4864x8192
 	Executive	4128x6080
@@ -237,8 +237,8 @@ static void lbp2900_page_setup(struct printer_state_s *state,
 	(void) width;
 	dims->band_size = 70;
 	dims->line_size = 4736 / 8;
-	if (height > 6784)
-		dims->num_lines = 6784;
+	if (height > 4520)
+		dims->num_lines = 4520;
 	else
 		dims->num_lines = height;
 }

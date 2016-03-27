@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2013 Alexey Galakhov <agalakhov@gmail.com>
+ * Copyright (C) 2016 Alexei Gordeev <KP1533TM2@gmail.com>
  *
  * Licensed under the GNU General Public License Version 3
  *
@@ -95,6 +96,30 @@ static void lbp2900_job_prologue(struct printer_state_s *state)
 	capt_sendrecv(CAPT_JOB_BEGIN, magicbuf_0, ARRAY_SIZE(magicbuf_0), NULL, 0);
 	lbp2900_wait_ready(state->ops);
 	send_job_start();
+	lbp2900_wait_ready(state->ops);
+}
+
+static void lbp3000_job_prologue(struct printer_state_s *state)
+{
+	(void) state;
+	capt_sendrecv(CAPT_IDENT, NULL, 0, NULL, 0);
+	sleep(1);
+	capt_init_status();
+	lbp2900_get_status(state->ops);
+
+	capt_sendrecv(CAPT_START_0, NULL, 0, NULL, 0);
+	capt_sendrecv(CAPT_JOB_BEGIN, magicbuf_0, ARRAY_SIZE(magicbuf_0), NULL, 0);
+	/* LBP-3000 prints the very first printjob perfectly
+	 * and then proceeds to hang at this (commented out)
+	 * spot. That's the difference, or so it seems. */
+/*	lbp2900_wait_ready(state->ops);	*/
+	send_job_start();
+	
+	/* There's also that command, that apparently does something, and does something, 
+	 * but it's there in the Wireshark logs. Response data == command data. */
+	uint8_t dummy[2] = {0,0};
+	capt_sendrecv(0xE0A6, dummy, sizeof(dummy), NULL, 0);
+	
 	lbp2900_wait_ready(state->ops);
 }
 
@@ -232,8 +257,23 @@ static struct lbp2900_ops_s lbp2900_ops = {
 	.wait_ready = capt_wait_ready,
 };
 
+static struct lbp2900_ops_s lbp3000_ops = {
+	.ops = {
+		.job_prologue = lbp3000_job_prologue,	/* different job prologue */
+		.job_epilogue = lbp2900_job_epilogue,
+		.page_setup = lbp2900_page_setup,
+		.page_prologue = lbp2900_page_prologue,
+		.page_epilogue = lbp2900_page_epilogue,
+		.compress_band = ops_compress_band_hiscoa,
+		.send_band = ops_send_band_hiscoa,
+		.wait_user = lbp2900_wait_user,
+	},
+	.get_status = capt_get_xstatus,
+	.wait_ready = capt_wait_ready,
+};
+
 register_printer("LBP2900", lbp2900_ops.ops, WORKS);
-register_printer("LBP3000", lbp2900_ops.ops, EXPERIMENTAL);
+register_printer("LBP3000", lbp3000_ops.ops, EXPERIMENTAL);
 
 static struct lbp2900_ops_s lbp3010_ops = {
 	.ops = {

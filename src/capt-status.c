@@ -68,6 +68,7 @@ static void decode_status(const uint8_t *s, size_t size)
 	status.page_printing  = WORD(s[16], s[17]);
 	status.page_out       = WORD(s[18], s[19]);
 	status.page_completed = WORD(s[20], s[21]);
+	status.page_received  = WORD(s[34], s[35]);
 
 	status.status[4] = WORD(s[24], s[25]);
 
@@ -99,6 +100,13 @@ const struct capt_status_s *capt_get_xstatus_only(void)
 {
 	download_status(CAPT_CHKXSTATUS);
 	print_status();
+	/*
+	if (FLAG(&status, CAPT_FL_JOBSTAT_CHNG)) {
+	   capt_sendrecv(CAPT_CHKJOBSTAT, NULL, 0, NULL, 0);
+	   print_status();
+	}
+	*/
+
 	return &status;
 }
 
@@ -120,4 +128,10 @@ void capt_wait_xready(void)
 {
 	while (FLAG(capt_get_xstatus(), CAPT_FL_BUSY))
 		sleep(1);
+}
+
+void capt_wait_xready_only(void)
+{
+       while (FLAG(capt_get_xstatus_only(), CAPT_FL_BUSY))
+               sleep(1);
 }

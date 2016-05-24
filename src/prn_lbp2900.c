@@ -118,7 +118,7 @@ static void lbp2900_job_prologue(struct printer_state_s *state)
 	capt_sendrecv(CAPT_GPIO, blinkoffbuf, ARRAY_SIZE(blinkoffbuf), NULL, 0);
 	lbp2900_wait_ready(state->ops);
 
-	send_job_start(1,0);
+	send_job_start(1, 0);
 	lbp2900_wait_ready(state->ops);
 }
 
@@ -136,11 +136,11 @@ static void lbp3000_job_prologue(struct printer_state_s *state)
 	 * and then proceeds to hang at this (commented out)
 	 * spot. That's the difference, or so it seems. */
 /*	lbp2900_wait_ready(state->ops);	*/
-	send_job_start();
+	send_job_start(1, 0);
 	
 	/* There's also that command, that apparently does something, and does something, 
 	 * but it's there in the Wireshark logs. Response data == command data. */
-	uint8_t dummy[2] = {0,0};
+	uint8_t dummy[2] = {0, 0};
 	capt_sendrecv(0xE0A6, dummy, sizeof(dummy), NULL, 0);
 	
 	lbp2900_wait_ready(state->ops);

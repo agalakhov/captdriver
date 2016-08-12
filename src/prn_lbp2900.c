@@ -158,7 +158,7 @@ static bool lbp2900_page_prologue(struct printer_state_s *state, const struct pa
 
 	uint8_t pageparms[] = {
 		0x00, 0x00, 0x30, 0x2A, /* sz */ 0x02, 0x00, 0x00, 0x00,
-		0x1C, 0x1C, 0x1C, 0x1C, pt1, /* adapt */ 0x81, 0x04, 0x00,
+		0x1C, 0x1C, 0x1C, 0x1C, pt1, /* adapt */ 0x11, 0x04, 0x00,
 		0x01, 0x01, /* img ref */ 0x00, save, 0x00, 0x00,
 		/* height margin 118 */ 0x76, 0x00,
 		/*  width margin 78 */  0x4e, 0x00,
@@ -278,8 +278,8 @@ static void lbp2900_page_setup(struct printer_state_s *state,
 	(void) width;
 	dims->band_size = 70;
 	dims->line_size = 4736 / 8;
-	if (height > 4520)
-		dims->num_lines = 4520;
+	if (height > 6778)
+		dims->num_lines = 6778;
 	else
 		dims->num_lines = height;
 }

@@ -47,7 +47,7 @@
 *OpenUI *Resolution/Resolution: PickOne
 *OrderDependency: 10 AnySetup *Resolution
 *DefaultResolution: 600dpi
-*Resolution 600dpi/600 DPI: "<</HWResolution[600 400]/cupsBitsPerColor 1/cupsRowCount 70/cupsRowFeed 592/cupsRowStep 0/cupsColorSpace 3>>setpagedevice"
+*Resolution 600dpi/600 DPI: "<</HWResolution[600 600]/cupsBitsPerColor 1/cupsRowCount 70/cupsRowFeed 592/cupsRowStep 0/cupsColorSpace 3>>setpagedevice"
 *CloseUI: *Resolution
 *DefaultFont: Courier
 *Font AvantGarde-Book: Standard "(1.05)" Standard ROM

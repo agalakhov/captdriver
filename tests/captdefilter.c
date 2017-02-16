@@ -99,7 +99,11 @@ static void decode_hiscoa_band(const uint8_t *buf, size_t size)
 	unsigned lines = WORD(buf[2], buf[3]);
 	decode_hiscoa_band_data(buf + 4, size - 4, lines);
 }
-
+static void decode_hiscoa_band2(const uint8_t *buf, size_t size)
+{
+	unsigned lines = WORD_(buf[2], buf[3]);
+	decode_hiscoa_band_data(buf + 8, size - 8, lines);
+}
 static void dispatch(uint16_t cmd, const uint8_t *buf, size_t size)
 {
 	switch (cmd) {
@@ -140,10 +144,14 @@ static void dispatch(uint16_t cmd, const uint8_t *buf, size_t size)
 		}
 		break;
 	case 0x8000:
-	case 0x8200:
 		fprintf(stderr, "  -(Hi-SCoA data)-\n");
 		dump(buf, 4);
 		decode_hiscoa_band(buf, size);
+		break;
+	case 0x8200:
+		fprintf(stderr, "  -(Hi-SCoA data 0x8200)-\n");
+		dump(buf, 4);
+		decode_hiscoa_band2(buf, size);
 		break;
 	case 0xC0A4:
 		fprintf(stderr, "  --end--\n");
@@ -195,6 +203,8 @@ int main(int argc, char **argv)
 			len = WORD(buf[6], buf[7]);
 			len <<= 16;
 			len += WORD(buf[4], buf[5]);
+			pos=0;
+			fseek(input, -8, SEEK_CUR);
 			break;
 		default:
 			len = WORD(buf[2], buf[3]);

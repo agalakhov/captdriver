@@ -157,9 +157,11 @@ static bool lbp2900_page_prologue(struct printer_state_s *state, const struct pa
 	size_t s;
 	uint8_t buf[16];
 
-	uint8_t pt1 = 0x01;
-	uint8_t save = 0x00;
-	uint8_t pt2 = 0x01;
+	uint8_t pt1 = dims->media_type_a;
+	uint8_t save = dims->toner_save;
+	uint8_t pt2 = dims->media_type_b; // Please see .drv file
+
+	fprintf(stderr, "DEBUG: CAPT: Media type: pt1=%u, pt2=%u\n", pt1, pt2);
 
 	uint8_t pageparms[] = {
 		/* Bytes 0-21 (0x00 to 0x15) */

@@ -293,6 +293,19 @@
 *DefaultColorModel: Gray
 *ColorModel Gray/Grayscale: "<</cupsColorSpace 3/cupsColorOrder 0/cupsCompression 2>>setpagedevice"
 *CloseUI: *ColorModel
+*OpenUI *captMediaWeight/Media Type B (Experimental): PickOne
+*OrderDependency: 11 AnySetup *captMediaWeight
+*DefaultcaptMediaWeight: pt2-1
+*captMediaWeight pt2-0/0: "<</MediaWeight 0>>setpagedevice"
+*captMediaWeight pt2-1/Default: "<</MediaWeight 1>>setpagedevice"
+*captMediaWeight pt2-2/2: "<</MediaWeight 2>>setpagedevice"
+*CloseUI: *captMediaWeight
+*OpenUI *captTonerSave/Toner Save: Boolean
+*OrderDependency: 10 AnySetup *captTonerSave
+*DefaultcaptTonerSave: False
+*captTonerSave False/Disabled: "<</cupsCompression 0>>setpagedevice"
+*captTonerSave True/Enabled: "<</cupsCompression 1>>setpagedevice"
+*CloseUI: *captTonerSave
 *OpenUI *Resolution/Resolution: PickOne
 *OrderDependency: 10 AnySetup *Resolution
 *DefaultResolution: 600dpi
@@ -301,7 +314,8 @@
 *OpenUI *MediaType/Media Type: PickOne
 *OrderDependency: 10 AnySetup *MediaType
 *DefaultMediaType: Plain
-*MediaType Plain/Plain Paper: "<</MediaType(Plain)/cupsMediaType 1>>setpagedevice"
+*MediaType Plain/Plain Paper: "<</MediaType(Plain)/cupsMediaType 0>>setpagedevice"
+*MediaType Thick/Thick Paper: "<</MediaType(Thick)/cupsMediaType 1>>setpagedevice"
 *CloseUI: *MediaType
 *DefaultFont: Courier
 *Font AvantGarde-Book: Standard "(1.05)" Standard ROM
@@ -339,4 +353,4 @@
 *Font Times-Roman: Standard "(1.05)" Standard ROM
 *Font ZapfChancery-MediumItalic: Standard "(1.05)" Standard ROM
 *Font ZapfDingbats: Special "(001.005)" Special ROM
-*% End of CNLB3K.ppd, 20690 bytes.
+*% End of CNLB3K.ppd, 21404 bytes.

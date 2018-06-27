@@ -24,9 +24,11 @@
 struct cups_page_header2_s;
 
 struct page_dims_s {
-	/* set by */
+	/* set by CUPS */
 	unsigned paper_width;
 	unsigned paper_height;
+	unsigned margin_height;
+	unsigned margin_width;
 	/* set by printer ops */
 	unsigned line_size;
 	unsigned band_size;

@@ -125,13 +125,18 @@ static void lbp2900_job_prologue(struct printer_state_s *state)
 static void lbp3000_job_prologue(struct printer_state_s *state)
 {
 	(void) state;
+	uint8_t buf[8];
+	size_t size;
+
 	capt_sendrecv(CAPT_IDENT, NULL, 0, NULL, 0);
 	sleep(1);
 	capt_init_status();
 	lbp2900_get_status(state->ops);
 
 	capt_sendrecv(CAPT_START_0, NULL, 0, NULL, 0);
-	capt_sendrecv(CAPT_JOB_BEGIN, magicbuf_0, ARRAY_SIZE(magicbuf_0), NULL, 0);
+	capt_sendrecv(CAPT_JOB_BEGIN, magicbuf_0, ARRAY_SIZE(magicbuf_0), buf, &size); 
+	job=WORD(buf[2], buf[3]); 
+
 	/* LBP-3000 prints the very first printjob perfectly
 	 * and then proceeds to hang at this (commented out)
 	 * spot. That's the difference, or so it seems. */
@@ -157,23 +162,23 @@ static bool lbp2900_page_prologue(struct printer_state_s *state, const struct pa
 	uint8_t pt2 = 0x01;
 
 	uint8_t pageparms[] = {
+		/* Bytes 0-21 (0x00 to 0x15) */
 		0x00, 0x00, 0x30, 0x2A, /* sz */ 0x02, 0x00, 0x00, 0x00,
 		0x1C, 0x1C, 0x1C, 0x1C, pt1, /* adapt */ 0x11, 0x04, 0x00,
 		0x01, 0x01, /* img ref */ 0x00, save, 0x00, 0x00,
-		/* height margin 118 */ 0x76, 0x00,
-		/*  width margin 78 */  0x4e, 0x00,
-		LO(dims->line_size), HI(dims->line_size), LO(dims->num_lines), HI(dims->num_lines),
+		/* Bytes 22-33 (0x16 to 0x21) */
+		LO(dims->margin_height), HI(dims->margin_height),
+		LO(dims->margin_width), HI(dims->margin_width),
+		LO(dims->line_size), HI(dims->line_size),
+		LO(dims->num_lines), HI(dims->num_lines),
 		LO(dims->paper_width), HI(dims->paper_width),
 		LO(dims->paper_height), HI(dims->paper_height),
-		/* 34 bytes */
+		/* Bytes 34-39 (0x22 to 0x27) */
 		0x00, 0x00, pt2, 0x00, 0x00, 0x00,
-		/* 72 bytes */
-/*
+		/* Spare bytes for later
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-*/
+		*/
 	};
 
 	(void) state;
@@ -266,22 +271,15 @@ static void lbp2900_job_epilogue(struct printer_state_s *state)
 static void lbp2900_page_setup(struct printer_state_s *state,
 		struct page_dims_s *dims,
 		unsigned width, unsigned height)
-{
-/*
-	A4		4736x6778 or 4736x4520
-	Letter		4864x6368
-	Legal		4864x8192
-	Executive	4128x6080
-	3x5		1344x2528
-*/
+{ 
+	// FIXME: Do we still need this function?
 	(void) state;
 	(void) width;
+	(void) height;
+	// Get raster dimensions straight from CUPS in paper.c
+	dims->num_lines = dims->paper_height;
+	dims->line_size = dims->paper_width / 8;
 	dims->band_size = 70;
-	dims->line_size = 4736 / 8;
-	if (height > 6778)
-		dims->num_lines = 6778;
-	else
-		dims->num_lines = height;
 }
 
 static void lbp2900_wait_user(struct printer_state_s *state)

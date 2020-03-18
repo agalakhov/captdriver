@@ -33,7 +33,7 @@ Command to ensure dependencies on Ubuntu 18.04.1 are installed:
 Guides for building on more systems will be made available in the
 [project Wiki][wiki].
 
-_Please do also check if CUPS is correctly set up on your system_😸
+_Please do also check if CUPS is correctly set up on your system_ 😸
 
 ## Cloning
 Please skip this step if you prefer to download the ZIP file and
@@ -46,7 +46,7 @@ in a directory where you would like to keep source files.
 
 ## Building
 If you've downloaded the source code from Git, you will find that 
-running the usual CMMI[^1] routine doesn't work, due to missing
+running the usual CMMI^ routine doesn't work, due to missing
 files. Run these commands in sequence to generate the necessary files,
 and build the driver:
 
@@ -61,7 +61,7 @@ make
 sudo make install
 ```
 
-[^1] `./confgure; make; make install;`
+^ `./confgure; make; make install;`
 
 ## Installation
 The above steps builds a single binary, `rastertocapt` and places it
@@ -124,5 +124,5 @@ In the meantime, please consult the documentation or user forums for
 your DE software.
 
 Links
-====
-[wiki]: http://github.com/mounaiban/captdriver/wiki "Mounaiban's captdriver Project Wiki".
+=====
+[wiki]: http://github.com/mounaiban/captdriver/wiki "Mounaiban's captdriver Project Wiki."

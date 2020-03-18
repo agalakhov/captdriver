@@ -123,6 +123,4 @@ However, guides will be posted on the [project Wiki][wiki]
 In the meantime, please consult the documentation or user forums for
 your DE software.
 
-Links
-=====
 [wiki]: http://github.com/mounaiban/captdriver/wiki "Mounaiban's captdriver Project Wiki."

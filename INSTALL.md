@@ -39,10 +39,10 @@ _Please do also check if CUPS is correctly set up on your system_ 😸
 Please skip this step if you prefer to download the ZIP file and
 extract it manually on your system.
 
-Use this command: `git clone https://github.com/mounaiban/captdriver`
+Use this command: `git clone https://github.com/mounaiban/captdriver.git`
 in a directory where you would like to keep source files.
 
-> If you prefer, clone Galakhov's original instead: `git clone https://github.com/`
+> If you prefer, clone Galakhov's original instead: `git clone https://github.com/agalakhov/captdriver.git`
 
 ## Building
 If you've downloaded the source code from Git, you will find that 

@@ -22,7 +22,7 @@ Captdriver aims to provide an free and open-source alternative means
 to using CAPT-only printers that can be maintained by the general public,
 and thus be improved to provide a better user experience.
 
-# Acknowledgements
+## Acknowledgements
 This driver is an onging work in progress, based on the works of
 Rildo Pragana, Nicholas Boichat, Alexey Galakhov, Benoit Bolsee as
 well as Vitaliy Tomin.

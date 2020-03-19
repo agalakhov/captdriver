@@ -27,11 +27,10 @@ This driver is an onging work in progress, based on the works of
 Rildo Pragana, Nicholas Boichat, Alexey Galakhov, Benoit Bolsee as
 well as Vitaliy Tomin.
 
-This repository is merely a curated version of Galakhov's repository.
-The code base will be kept identical for the time being; the only
-difference is the presence of additional documentation.
-
-
+This repository is merely a curated version of Alexey Galakhov's
+captdriver repository. The codebase will be kept identical for the
+time being; the only changes that will be made for now would be
+limited to the the addition of documentation and helper scripts.
 
 ## Installation and Setup
 This software must be manually installed. Please refer to Mounaiban's

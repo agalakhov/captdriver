@@ -11,11 +11,11 @@ system?
 **Captdriver is a free (as in speech) alternative driver** for Canon 
 printers that can only accept the proprietary CAPT data stream format.
 Captdriver allows the use of such printers in any operating system with 
-a working copy of *CUPS*.
+a working copy of the Common Unix Printing System (*CUPS*).
 
 ## Motivations
 While *macOS* and *Microsoft Windows* users will have a generally 
-satisfactory experience with those proprietary drivers, the same cannot
+satisfactory experience with Canon proprietary drivers, the same cannot
 be said for many of us not running these operating systems.
 
 Captdriver aims to provide an free and open-source alternative means

@@ -49,16 +49,18 @@ Some annoyances remain, such as the need to restart printers after
 performance to that experienced in macOS and Windows.
 
 ## Installation and Setup
-This software must be manually installed. Please review the 
-`INSTALL.md` file for detailed instructions.
+This software must be manually installed. Please refer to Mounaiban's
+Captdriver Wiki for detailed instructions at https://github.com/mounaiban/captdriver/wiki.
+You are advised that you will be using this software AT YOUR OWN RISK
+as it is rather incomplete.
 
 ## Technical Information
 Details of the CAPT format, including printer control
 protocols, status registers and compression algorithms are
 documented in the `SPECS` file. While incomplete and expected to
 contain errors and omissions, help with expanding it and making
-corrections is greatly appreciated. Please also check the 
-[wiki] for more information.
+corrections is greatly appreciated. Please also check the [wiki] 
+for more information on the scope and status of this project.
 
 ## Disclaimers
 Please use this driver at your own risk. As with any software licensed

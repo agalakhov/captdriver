@@ -2,42 +2,43 @@
 
 ## Foreword
 Are you still using an older Canon laser printer that doesn't support
-network printing, PCL or EPS? Does your printer only work with the
-proprietary Canon Advanced Printing Technology (CAPT) driver software?
-Did attempts at getting `ccpd` to work lead you nowhere? Or are you 
-averse to the practice of installing 32-bit dependencies on a 64-bit
-system?
+network printing, PCL or EPS? Do you use an operating system other than
+macOS or Microsoft Windows, and have trouble getting Canon's drivers to 
+work? Or are you simply averse to the practice of installing 32-bit 
+dependencies on a 64-bit system?
 
 **Captdriver is a free (as in speech) alternative driver** for Canon 
 printers that can only accept the proprietary CAPT data stream format.
-Captdriver allows the use of such printers in any operating system with 
-a working copy of *CUPS*.
+It aims to be a reliable and truly portable alternative driver for
+alternative operating systems such as GNU/Linux. Being free and open
+source, you can take part in its development too, and help with
+expanding support, adding new features, and most importantly, maintaining
+its codebase.
 
-## Motivations
-While *macOS* and *Microsoft Windows* users will have a generally 
-satisfactory experience with those proprietary drivers, the same cannot
-be said for many of us not running these operating systems.
+As Captdriver is almost completely written in C, and dependent only on
+the Common Unix Printing System (*CUPS*), it is potentially compatible
+with any operating system with a working copy of CUPS.
 
-Captdriver aims to provide an free and open-source alternative means
-to using CAPT-only printers that can be maintained by the general public,
-and thus be improved to provide a better user experience.
+As a bonus for users on 64-bit x86 hardware, Captdriver eliminates the
+need to run 32-bit binaries on your 64-bit operating system.
+
+## Status
+Capdriver is currently admittedly far from complete and many extra 
+features are still missing, but it's rather reliable for what it's
+capable of.
+
+Three printers are supported: LBP2900, LBP3000 and LBP3010, with any paper
+size from the width and height of an ISO A6 up to US Legal. Only 600dpi
+resolution is available for now.
 
 ## Acknowledgements
 This driver is an onging work in progress, based on the works of
 Rildo Pragana, Nicholas Boichat, Alexey Galakhov, Benoit Bolsee as
 well as Vitaliy Tomin.
 
-This repository is merely a curated version of Galakhov's repository.
-The code base will be kept identical for the time being; the only
-difference is the presence of additional documentation.
-
-
-
 ## Installation and Setup
 This software must be manually installed. Please refer to Mounaiban's
 Captdriver Wiki for detailed instructions at https://github.com/mounaiban/captdriver/wiki.
-You are advised that you will be using this software AT YOUR OWN RISK
-as it is rather incomplete.
 
 ## Technical Information
 Details of the CAPT format, including printer control
@@ -50,6 +51,7 @@ for more information on the scope and status of this project.
 ## Disclaimers
 Please use this driver at your own risk. As with any software licensed
 under the *GNU General Public License 3.0*, there is NO WARRANTY.
+Full terms and conditions are detailed in the file named `COPYING`.
 
 This is unofficial software not endorsed by Canon Inc. or any of its
 affiliates.

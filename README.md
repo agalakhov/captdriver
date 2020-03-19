@@ -31,22 +31,7 @@ This repository is merely a curated version of Galakhov's repository.
 The code base will be kept identical for the time being; the only
 difference is the presence of additional documentation.
 
-## Status
-The driver has been recently tested at time of writing to work with
-a Canon Laser Shot LBP 3000. Success with the LBP 2900 has also been
-reported. Reports on more devices are wanted and will be much appreciated.
-@agalakhov has pretty much nailed it with the CAPT data stream format and
-control routines, but more work is needed before captdriver can match the
-experience in macOS and Windows.
 
-The installation process is rather clumsy, but the driver is believed
-to have a superior chance of enabling printers to work on some operating
-systems such as GNU/Linux distributions (_Arch Linux_, _Alpine Linux_, 
-_Debian_,  _Fedora_, _Ubuntu_,...).
-
-Some annoyances remain, such as the need to restart printers after
-**every** job to continue with the next, and generally inferior 
-performance to that experienced in macOS and Windows.
 
 ## Installation and Setup
 This software must be manually installed. Please refer to Mounaiban's

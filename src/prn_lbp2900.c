@@ -125,13 +125,18 @@ static void lbp2900_job_prologue(struct printer_state_s *state)
 static void lbp3000_job_prologue(struct printer_state_s *state)
 {
 	(void) state;
+	uint8_t buf[8];
+	size_t size;
+
 	capt_sendrecv(CAPT_IDENT, NULL, 0, NULL, 0);
 	sleep(1);
 	capt_init_status();
 	lbp2900_get_status(state->ops);
 
 	capt_sendrecv(CAPT_START_0, NULL, 0, NULL, 0);
-	capt_sendrecv(CAPT_JOB_BEGIN, magicbuf_0, ARRAY_SIZE(magicbuf_0), NULL, 0);
+	capt_sendrecv(CAPT_JOB_BEGIN, magicbuf_0, ARRAY_SIZE(magicbuf_0), buf, &size); 
+	job=WORD(buf[2], buf[3]); 
+
 	/* LBP-3000 prints the very first printjob perfectly
 	 * and then proceeds to hang at this (commented out)
 	 * spot. That's the difference, or so it seems. */

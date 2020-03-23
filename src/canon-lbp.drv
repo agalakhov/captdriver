@@ -1,0 +1,35 @@
+/*
+ * Canon CAPT LBP Printers
+ * captdriver PPD Source File
+ * for use with CUPS ppdc to generate PPDs
+ *
+ */
+#include <font.defs>
+#include <media.defs>
+
+Copyright "(C)2020 Moses Chong"
+ColorModel "Gray/Grayscale" k chunky 2 
+Filter application/vnd.cups-raster 1 rastertocapt 
+*Manufacturer "Canon Inc"
+Version 0.1.1 
+{
+    Font *
+    *MediaSize A4
+    *Resolution k 1 70 592 0 "600dpi/600 DPI"
+    {
+	// nearly matched to Alexey Galakhov's original 2011 specs
+	*ModelName "LBP2900/LBP3010"
+	FileName "Canon-LBP2900.ppd"
+	HWmargins 4.7095835mm 4.7095835mm 4.709583mm 4.709583mm 
+	PCFileName "lbp2900.ppd"
+    }
+
+    {
+	*ModelName "LBP3000"
+	FileName "Canon-LBP3000.ppd"
+	HWmargins 4.7mm 4.7mm 4.7mm 4.7mm 
+	MediaType 1 "Plain/Plain Paper"
+	PCFileName "lbp3000.ppd"
+    }
+}
+

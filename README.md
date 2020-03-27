@@ -17,16 +17,19 @@ its codebase.
 
 As Captdriver is almost completely written in C, and dependent only on
 the Common Unix Printing System (*CUPS*), it is potentially compatible
-with any operating system with a working copy CUPS.
+with any operating system with a working copy of CUPS.
 
-As a bonus for users on 64-bit x86 hardware, Captrdiver eliminates the
+As a bonus for users on 64-bit x86 hardware, Captdriver eliminates the
 need to run 32-bit binaries on your 64-bit operating system.
 
 ## Status
-Capdriver is currently admittedly far from complete, but it is rather
-currently capable of supporting three printers: LBP2900, LBP3000 and
-LBP3010. Only A4-size printing is supported at the moment, but within
-these limitations, the driver is pretty reliable and functional.
+Capdriver is currently admittedly far from complete and many extra 
+features are still missing, but it's rather reliable for what it's
+capable of.
+
+Three printers are supported: LBP2900, LBP3000 and LBP3010, with any paper
+size from the width and height of an ISO A6 up to US Legal. Only 600dpi
+resolution is available for now.
 
 ## Acknowledgements
 This driver is an onging work in progress, based on the works of
@@ -39,8 +42,6 @@ for a cleaner codebase.
 ## Installation and Setup
 This software must be manually installed. Please refer to Mounaiban's
 Captdriver Wiki for detailed instructions at https://github.com/mounaiban/captdriver/wiki.
-You are advised that you will be using this software AT YOUR OWN RISK
-as it is rather incomplete.
 
 ## Technical Information
 Details of the CAPT format, including printer control

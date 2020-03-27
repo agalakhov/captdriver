@@ -20,7 +20,7 @@ as follows:
    * *PROTIP*: For security reasons, CUPS will only run filters that
      are locked down: owned by the `root` user with read-and-execute-only
      permissions to all other users. See this message on
-     (Issue #7)[https://github.com/agalakhov/captdriver/issues/7#issuecomment-604221791] for details.
+     [Issue #7](https://github.com/agalakhov/captdriver/issues/7#issuecomment-604221791) for details.
 
 5. Compile the PPD file, to introduce your printer to the CUPS 
    daemon.

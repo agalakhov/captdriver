@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([captdriver], [0.1.0])
+AC_INIT([captdriver], [0.1.2])
 
 AC_CONFIG_SRCDIR([src/std.h])
 

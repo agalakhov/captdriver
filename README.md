@@ -36,9 +36,6 @@ This driver is an onging work in progress, based on the works of
 Rildo Pragana, Nicholas Boichat, Alexey Galakhov, Benoit Bolsee as
 well as Vitaliy Tomin.
 
-Please also check out [Galakhov's master repository](https://github.com/agalakhov/captdriver)
-for a cleaner codebase.
-
 ## Installation and Setup
 This software must be manually installed. Please refer to Mounaiban's
 Captdriver Wiki for detailed instructions at https://github.com/mounaiban/captdriver/wiki.

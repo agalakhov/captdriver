@@ -18,11 +18,16 @@
  */
 
 #include "paper.h"
-
 #include <cups/raster.h>
 
 void page_set_dims(struct page_dims_s *dims, const struct cups_page_header2_s *header)
 {
+	dims->media_type_a = header->cupsMediaType;
+	dims->media_type_b = header->MediaWeight;
 	dims->paper_width  = header->PageSize[0] * header->HWResolution[0] / 72;
 	dims->paper_height = header->PageSize[1] * header->HWResolution[1] / 72;
+	//using cupsCompression to reduce ink darkness, like Zebra printers
+	dims->toner_save = header->cupsCompression; 
+	dims->margin_height = header->Margins[0];
+	dims->margin_width = header->Margins[1];
 }

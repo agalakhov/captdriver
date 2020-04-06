@@ -157,16 +157,41 @@ static bool lbp2900_page_prologue(struct printer_state_s *state, const struct pa
 	size_t s;
 	uint8_t buf[16];
 
-	uint8_t pt1 = dims->media_type_a;
 	uint8_t save = dims->toner_save;
-	uint8_t pt2 = dims->media_type_b; // Please see .drv file
+	uint8_t fm = 0x00; /* fuser mode (temperature?) */
 
-	fprintf(stderr, "DEBUG: CAPT: Media type: pt1=%u, pt2=%u\n", pt1, pt2);
+	switch (dims->media_type) {
+		case 0x00:
+		case 0x02:
+			/* Plain Paper & Plain Paper L */
+			fm = 0x01;
+			break;
+		case 0x01:
+			/* Heavy Paper */
+			fm = 0x01;
+			break;
+		case 0x03:
+			/* Heavy Paper H */
+			fm = 0x02;
+			break;
+		case 0x04:
+			/* Transparency */
+			fm = 0x13;
+			break;
+		case 0x05:
+			/* Envelope */
+			fm = 0x1C;
+			break;
+		default:
+			fm = 0x01;
+	}
+
+	fprintf(stderr, "DEBUG: CAPT: media_type=%u, fm=%u\n", dims->media_type, fm);
 
 	uint8_t pageparms[] = {
 		/* Bytes 0-21 (0x00 to 0x15) */
 		0x00, 0x00, 0x30, 0x2A, /* sz */ 0x02, 0x00, 0x00, 0x00,
-		0x1C, 0x1C, 0x1C, 0x1C, pt1, /* adapt */ 0x11, 0x04, 0x00,
+		0x1C, 0x1C, 0x1C, 0x1C, dims->media_type, /* adapt */ 0x11, 0x04, 0x00,
 		0x01, 0x01, /* img ref */ 0x00, save, 0x00, 0x00,
 		/* Bytes 22-33 (0x16 to 0x21) */
 		LO(dims->margin_height), HI(dims->margin_height),
@@ -176,7 +201,7 @@ static bool lbp2900_page_prologue(struct printer_state_s *state, const struct pa
 		LO(dims->paper_width), HI(dims->paper_width),
 		LO(dims->paper_height), HI(dims->paper_height),
 		/* Bytes 34-39 (0x22 to 0x27) */
-		0x00, 0x00, pt2, 0x00, 0x00, 0x00,
+		0x00, 0x00, fm, 0x00, 0x00, 0x00,
 		/* Spare bytes for later
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -274,11 +299,11 @@ static void lbp2900_page_setup(struct printer_state_s *state,
 		struct page_dims_s *dims,
 		unsigned width, unsigned height)
 { 
-	// FIXME: Do we still need this function?
+	/* FIXME: Do we still need this function? */
 	(void) state;
 	(void) width;
 	(void) height;
-	// Get raster dimensions straight from CUPS in paper.c
+	/* Get raster dimensions straight from CUPS in paper.c */
 	dims->num_lines = dims->paper_height;
 	dims->line_size = dims->paper_width / 8;
 	dims->band_size = 70;

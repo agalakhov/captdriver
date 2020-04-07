@@ -102,23 +102,6 @@ Version 0.1.3
 	MediaSize Statement
 	// End Less Common Sizes
 
-	// Paper Type B Options
-	/* 
-	   This option is wired directly to the pt2 register in the
-	   page prologue (see prn_lbp2900.c). Its exact purpose is not
-	   known, but it appears to be an adjustment to cater the printer
-	   for different paper weights.
-	   The proprietary drivers offers a 'Plain Paper L' and 'Heavy Paper H'
-	   option. The LBP 3000 manual describes Heavy Paper H as an option
-	   to 'get improved fixing properties' for thick paper and 
-	   Plain Paper L as an option reduce curling on plain paper.
-	   And then there's the Transparency option for clear plastic film...
-	 */
-	Option "captMediaWeight/Media Type B (Experimental)" PickOne AnySetup 11
-		Choice "pt2-0/0" "<</MediaWeight 0>>setpagedevice"
-		*Choice "pt2-1/Default" "<</MediaWeight 1>>setpagedevice"
-		Choice "pt2-2/2" "<</MediaWeight 2>>setpagedevice"
-
 	// Toner Save Option
 	Option "captTonerSave/Toner Save" Boolean AnySetup 10 
 		*Choice False/Disabled "<</cupsCompression 0>>setpagedevice"
@@ -127,7 +110,11 @@ Version 0.1.3
 	*Resolution k 1 70 592 0 "600dpi/600 DPI"
 	MaxSize 215.9mm 355.6mm		// US Legal
 	MediaType 0 "Plain/Plain Paper"
-	MediaType 1 "Thick/Thick Paper"
+	MediaType 1 "Heavy/Heavy Paper"
+	MediaType 2 "PlainL/Plain Paper L"
+	MediaType 3 "HeavyH/Heavy Paper H"
+	MediaType 4 "Transparency"
+	MediaType 5 "Envelope"
 	VariablePaperSize yes
 	{
 		// nearly matched to Alexey Galakhov's original 2011 specs

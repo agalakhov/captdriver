@@ -3,7 +3,7 @@
 *%%%% Created by the CUPS PPD Compiler CUPS v2.2.10.
 *% (C)2020 Moses Chong
 *FormatVersion: "4.3"
-*FileVersion: "0.1.2"
+*FileVersion: "0.1.3"
 *LanguageVersion: English
 *LanguageEncoding: ISOLatin1
 *PCFileName: "CNLB2K9.ppd"
@@ -11,7 +11,7 @@
 *Manufacturer: "Canon Inc"
 *ModelName: "Canon Inc LBP2900/LBP3010 r2c"
 *ShortNickName: "Canon Inc LBP2900/LBP3010 r2c"
-*NickName: "Canon Inc LBP2900/LBP3010 r2c, 0.1.2"
+*NickName: "Canon Inc LBP2900/LBP3010 r2c, 0.1.3"
 *PSVersion: "(3010.000) 0"
 *LanguageLevel: "3"
 *ColorDevice: False
@@ -293,13 +293,6 @@
 *DefaultColorModel: Gray
 *ColorModel Gray/Grayscale: "<</cupsColorSpace 3/cupsColorOrder 0/cupsCompression 2>>setpagedevice"
 *CloseUI: *ColorModel
-*OpenUI *captMediaWeight/Media Type B (Experimental): PickOne
-*OrderDependency: 11 AnySetup *captMediaWeight
-*DefaultcaptMediaWeight: pt2-1
-*captMediaWeight pt2-0/0: "<</MediaWeight 0>>setpagedevice"
-*captMediaWeight pt2-1/Default: "<</MediaWeight 1>>setpagedevice"
-*captMediaWeight pt2-2/2: "<</MediaWeight 2>>setpagedevice"
-*CloseUI: *captMediaWeight
 *OpenUI *captTonerSave/Toner Save: Boolean
 *OrderDependency: 10 AnySetup *captTonerSave
 *DefaultcaptTonerSave: False
@@ -315,7 +308,11 @@
 *OrderDependency: 10 AnySetup *MediaType
 *DefaultMediaType: Plain
 *MediaType Plain/Plain Paper: "<</MediaType(Plain)/cupsMediaType 0>>setpagedevice"
-*MediaType Thick/Thick Paper: "<</MediaType(Thick)/cupsMediaType 1>>setpagedevice"
+*MediaType Heavy/Heavy Paper: "<</MediaType(Heavy)/cupsMediaType 1>>setpagedevice"
+*MediaType PlainL/Plain Paper L: "<</MediaType(PlainL)/cupsMediaType 2>>setpagedevice"
+*MediaType HeavyH/Heavy Paper H: "<</MediaType(HeavyH)/cupsMediaType 3>>setpagedevice"
+*MediaType Transparency/Transparency: "<</MediaType(Transparency)/cupsMediaType 4>>setpagedevice"
+*MediaType Envelope/Envelope: "<</MediaType(Envelope)/cupsMediaType 5>>setpagedevice"
 *CloseUI: *MediaType
 *DefaultFont: Courier
 *Font AvantGarde-Book: Standard "(1.05)" Standard ROM
@@ -353,4 +350,4 @@
 *Font Times-Roman: Standard "(1.05)" Standard ROM
 *Font ZapfChancery-MediumItalic: Standard "(1.05)" Standard ROM
 *Font ZapfDingbats: Special "(001.005)" Special ROM
-*% End of CNLB2K9.ppd, 21444 bytes.
+*% End of CNLB2K9.ppd, 21449 bytes.

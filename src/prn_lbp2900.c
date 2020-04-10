@@ -157,6 +157,63 @@ static bool lbp2900_page_prologue(struct printer_state_s *state, const struct pa
 	size_t s;
 	uint8_t buf[16];
 
+	uint8_t mt = 0x00; /* media type, 0x00: Plain Paper */
+	uint8_t save = dims->toner_save;
+	uint8_t fm = 0x01; /* fuser mode (temperature?) */
+	uint8_t air = 0x02; /* image refinement mode 0x02: Windows CAPT default */
+
+	/* FIXME: pageparms only support A4 plain paper printing */
+	uint8_t pageparms[] = {
+		/* Bytes 0-21 (0x00 to 0x15) */
+		0x00, 0x00, 0x30, 0x2A, /* sz */ 0x02, 0x00, 0x00, 0x00,
+		0x1F, 0x1F, 0x1F, 0x1F, mt, /* adapt */ 0x11, 0x04, 0x00,
+		0x01, 0x01, /* img ref */ air, save, 0x00, 0x00,
+		/* Bytes 22-33 (0x16 to 0x21) */
+		/*Margin height? 120*/ 0x78, 0x00,
+		/*Margin width? 96*/ 0x60, 0x00,
+		LO(dims->line_size), HI(dims->line_size),
+		LO(dims->num_lines), HI(dims->num_lines),
+		LO(dims->paper_width), HI(dims->paper_width),
+		LO(dims->paper_height), HI(dims->paper_height),
+		/* Bytes 34-39 (0x22 to 0x27) */
+		0x00, 0x00, fm, 0x00, 0x00, 0x00,
+	};
+
+	(void) state;
+
+	status = lbp2900_get_status(state->ops);
+	if (FLAG(status, CAPT_FL_UNINIT1) || FLAG(status, CAPT_FL_UNINIT2)) {
+		capt_sendrecv(CAPT_START_1, NULL, 0, NULL, 0);
+		capt_sendrecv(CAPT_START_2, NULL, 0, NULL, 0);
+		capt_sendrecv(CAPT_START_3, NULL, 0, NULL, 0);
+		lbp2900_wait_ready(state->ops);
+		capt_sendrecv(CAPT_UPLOAD_2, magicbuf_2, ARRAY_SIZE(magicbuf_2), NULL, 0);
+		lbp2900_wait_ready(state->ops);
+	}
+
+	while (1) {
+		if (! FLAG(lbp2900_get_status(state->ops), CAPT_FL_BUFFERFULL))
+			break;
+		sleep(1);
+	}
+
+	capt_multi_begin(CAPT_SET_PARMS);
+	capt_multi_add(CAPT_SET_PARM_PAGE, pageparms, sizeof(pageparms));
+	s = hiscoa_format_params(buf, sizeof(buf), &hiscoa_default_params);
+	capt_multi_add(CAPT_SET_PARM_HISCOA, buf, s);
+	capt_multi_add(CAPT_SET_PARM_1, NULL, 0);
+	capt_multi_add(CAPT_SET_PARM_2, NULL, 0);
+	capt_multi_send();
+
+	return true;
+}
+
+static bool lbp3000_page_prologue(struct printer_state_s *state, const struct page_dims_s *dims)
+{
+	const struct capt_status_s *status;
+	size_t s;
+	uint8_t buf[16];
+
 	uint8_t save = dims->toner_save;
 	uint8_t fm = 0x00; /* fuser mode (temperature?) */
 
@@ -191,7 +248,7 @@ static bool lbp2900_page_prologue(struct printer_state_s *state, const struct pa
 	uint8_t pageparms[] = {
 		/* Bytes 0-21 (0x00 to 0x15) */
 		0x00, 0x00, 0x30, 0x2A, /* sz */ 0x02, 0x00, 0x00, 0x00,
-		0x1C, 0x1C, 0x1C, 0x1C, dims->media_type, /* adapt */ 0x11, 0x04, 0x00,
+		0x1F, 0x1F, 0x1F, 0x1F, dims->media_type, /* adapt */ 0x11, 0x04, 0x00,
 		0x01, 0x01, /* img ref */ 0x00, save, 0x00, 0x00,
 		/* Bytes 22-33 (0x16 to 0x21) */
 		LO(dims->margin_height), HI(dims->margin_height),
@@ -202,10 +259,70 @@ static bool lbp2900_page_prologue(struct printer_state_s *state, const struct pa
 		LO(dims->paper_height), HI(dims->paper_height),
 		/* Bytes 34-39 (0x22 to 0x27) */
 		0x00, 0x00, fm, 0x00, 0x00, 0x00,
-		/* Spare bytes for later
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		*/
+	};
+
+	(void) state;
+
+	status = lbp2900_get_status(state->ops);
+	if (FLAG(status, CAPT_FL_UNINIT1) || FLAG(status, CAPT_FL_UNINIT2)) {
+		capt_sendrecv(CAPT_START_1, NULL, 0, NULL, 0);
+		capt_sendrecv(CAPT_START_2, NULL, 0, NULL, 0);
+		capt_sendrecv(CAPT_START_3, NULL, 0, NULL, 0);
+
+		/* FIXME: wait for printer is free (could it be potentially dangerous or really mandatory?) */
+		while ( ! FLAG(lbp2900_get_status(state->ops), ((4 << 16) | (1 << 0)) ) )
+		  sleep(1);
+		lbp2900_get_status(state->ops);
+
+
+		lbp2900_wait_ready(state->ops);
+		capt_sendrecv(CAPT_UPLOAD_2, magicbuf_2, ARRAY_SIZE(magicbuf_2), NULL, 0);
+		lbp2900_wait_ready(state->ops);
+	}
+
+	while (1) {
+		if (! FLAG(lbp2900_get_status(state->ops), CAPT_FL_BUFFERFULL))
+			break;
+		sleep(1);
+	}
+
+	capt_multi_begin(CAPT_SET_PARMS);
+	capt_multi_add(CAPT_SET_PARM_PAGE, pageparms, sizeof(pageparms));
+	s = hiscoa_format_params(buf, sizeof(buf), &hiscoa_default_params);
+	capt_multi_add(CAPT_SET_PARM_HISCOA, buf, s);
+	capt_multi_add(CAPT_SET_PARM_1, NULL, 0);
+	capt_multi_add(CAPT_SET_PARM_2, NULL, 0);
+	capt_multi_send();
+
+	return true;
+}
+
+static bool lbp3010_page_prologue(struct printer_state_s *state, const struct page_dims_s *dims)
+{
+	const struct capt_status_s *status;
+	size_t s;
+	uint8_t buf[16];
+
+	uint8_t mt = 0x00; /* media type, 0x00: Plain Paper */
+	uint8_t save = dims->toner_save;
+	uint8_t fm = 0x01; /* fuser mode (temperature?) */
+	uint8_t air = 0x00; /* image refinement mode */
+
+	/* FIXME: pageparms only support A4 plain paper printing */
+	uint8_t pageparms[] = {
+		/* Bytes 0-21 (0x00 to 0x15) */
+		0x00, 0x00, 0x30, 0x2A, /* sz */ 0x02, 0x00, 0x00, 0x00,
+		0x1C, 0x1C, 0x1C, 0x1C, mt, /* adapt */ 0x11, 0x04, 0x00,
+		0x01, 0x01, /* img ref */ air, save, 0x00, 0x00,
+		/* Bytes 22-33 (0x16 to 0x21) */
+		/*Margin height? 118*/ 0x76, 0x00,
+		/*Margin width? 78*/ 0x4e, 0x00,
+		LO(dims->line_size), HI(dims->line_size),
+		LO(dims->num_lines), HI(dims->num_lines),
+		LO(dims->paper_width), HI(dims->paper_width),
+		LO(dims->paper_height), HI(dims->paper_height),
+		/* Bytes 34-39 (0x22 to 0x27) */
+		0x00, 0x00, fm, 0x00, 0x00, 0x00,
 	};
 
 	(void) state;
@@ -378,7 +495,7 @@ static struct lbp2900_ops_s lbp3000_ops = {
 		.job_prologue = lbp3000_job_prologue,	/* different job prologue */
 		.job_epilogue = lbp2900_job_epilogue,
 		.page_setup = lbp3000_page_setup,
-		.page_prologue = lbp2900_page_prologue,
+		.page_prologue = lbp3000_page_prologue,
 		.page_epilogue = lbp2900_page_epilogue,
 		.compress_band = ops_compress_band_hiscoa,
 		.send_band = ops_send_band_hiscoa,
@@ -396,7 +513,7 @@ static struct lbp2900_ops_s lbp3010_ops = {
 		.job_prologue = lbp2900_job_prologue,
 		.job_epilogue = lbp2900_job_epilogue,
 		.page_setup = lbp2900_page_setup,
-		.page_prologue = lbp2900_page_prologue,
+		.page_prologue = lbp3010_page_prologue,
 		.page_epilogue = lbp2900_page_epilogue,
 		.compress_band = ops_compress_band_hiscoa,
 		.send_band = ops_send_band_hiscoa,

@@ -299,7 +299,32 @@ static void lbp2900_page_setup(struct printer_state_s *state,
 		struct page_dims_s *dims,
 		unsigned width, unsigned height)
 { 
-	/* FIXME: Do we still need this function? */
+/*
+	TODO: Only A4 printing is available with this page setup ops.
+	Multiple sizes will be enabled once more information becomes
+	available.
+
+	Estimated target raster sizes at 600dpi
+	A4		4736x6784
+	Letter		4864x6368
+	Legal		4864x8192
+	Executive	4128x6080
+	3x5		1344x2528
+*/
+	(void) state;
+	(void) width;
+	dims->band_size = 70;
+	dims->line_size = 4736 / 8;
+	if (height > 6784)
+		dims->num_lines = 6784;
+	else
+		dims->num_lines = height;
+}
+
+static void lbp3000_page_setup(struct printer_state_s *state,
+		struct page_dims_s *dims,
+		unsigned width, unsigned height)
+{ 
 	(void) state;
 	(void) width;
 	(void) height;
@@ -352,7 +377,7 @@ static struct lbp2900_ops_s lbp3000_ops = {
 	.ops = {
 		.job_prologue = lbp3000_job_prologue,	/* different job prologue */
 		.job_epilogue = lbp2900_job_epilogue,
-		.page_setup = lbp2900_page_setup,
+		.page_setup = lbp3000_page_setup,
 		.page_prologue = lbp2900_page_prologue,
 		.page_epilogue = lbp2900_page_epilogue,
 		.compress_band = ops_compress_band_hiscoa,

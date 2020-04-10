@@ -3,7 +3,7 @@
 *%%%% Created by the CUPS PPD Compiler CUPS v2.2.10.
 *% (C)2020 Moses Chong
 *FormatVersion: "4.3"
-*FileVersion: "0.1.3"
+*FileVersion: "0.1.3-emergency-fix-1"
 *LanguageVersion: English
 *LanguageEncoding: ISOLatin1
 *PCFileName: "CNLB3K.ppd"
@@ -11,7 +11,7 @@
 *Manufacturer: "Canon Inc"
 *ModelName: "Canon Inc LBP3000 r2c"
 *ShortNickName: "Canon Inc LBP3000 r2c"
-*NickName: "Canon Inc LBP3000 r2c, 0.1.3"
+*NickName: "Canon Inc LBP3000 r2c, 0.1.3-emergency-fix-1"
 *PSVersion: "(3010.000) 0"
 *LanguageLevel: "3"
 *ColorDevice: False
@@ -350,4 +350,4 @@
 *Font Times-Roman: Standard "(1.05)" Standard ROM
 *Font ZapfChancery-MediumItalic: Standard "(1.05)" Standard ROM
 *Font ZapfDingbats: Special "(001.005)" Special ROM
-*% End of CNLB3K.ppd, 21409 bytes.
+*% End of CNLB3K.ppd, 21441 bytes.

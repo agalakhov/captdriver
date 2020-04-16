@@ -32,6 +32,7 @@ struct page_dims_s {
 	unsigned margin_height;
 	unsigned margin_width;
 	/* set by printer ops */
+	bool auto_set;
 	unsigned line_size;
 	unsigned band_size;
 	unsigned num_lines;

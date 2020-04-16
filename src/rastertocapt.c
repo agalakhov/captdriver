@@ -201,10 +201,11 @@ static void do_print(int fd)
 
 			state->ipage += 1;
 
-			page_set_dims(&cached_page->dims, &header);
 
 			ops->page_setup(state, &cached_page->dims,
 					header.cupsWidth, header.cupsHeight);
+
+			page_set_dims(&cached_page->dims, &header);
 
 			compress_page_data(state, cached_page, raster, &header);
 		}

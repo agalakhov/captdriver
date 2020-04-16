@@ -16,12 +16,11 @@ Copyright "(C)2020 Moses Chong"
 ColorModel "Gray/Grayscale" k chunky 2 
 Filter application/vnd.cups-raster 1 rastertocapt 
 *Manufacturer "Canon Inc"
-Version 0.1.3-emergency-fix-1
+Version 0.1.3-e2
 {
 	Font *
 	
 	// Common Sizes
-	*MediaSize A4
 	// Toner Save Option
 	Option "captTonerSave/Toner Save" Boolean AnySetup 10 
 		*Choice False/Disabled "<</cupsCompression 0>>setpagedevice"
@@ -29,29 +28,33 @@ Version 0.1.3-emergency-fix-1
 
 	*Resolution k 1 70 592 0 "600dpi/600 DPI"
 	{
-		/* LBP 2900/3010 */
+		/* LBP 3010 */
 		/* nearly matched to Alexey Galakhov's original 2011 specs */
 		*ModelName "LBP2900/LBP3010 r2c"
-		FileName "Canon-LBP2900.ppd"
+		*MediaSize A4
+		FileName "Canon-LBP3010.ppd"
 		MinSize 75mm 105mm
 		HWmargins 4.7095835mm 4.7095835mm 4.709583mm 4.709583mm 
-		PCFileName "CNLB2K9.ppd"
+		PCFileName "CNLB3K10.ppd"
 	}
 
 	{
-		/* LBP 3000, with multi-page size and type support */
-		MaxSize 215.9mm 355.6mm		// US Legal
+		/* LBP 2900/3000, with multi-page size and type support */
 		MediaType 0 "Plain/Plain Paper"
 		MediaType 1 "Heavy/Heavy Paper"
 		MediaType 2 "PlainL/Plain Paper L"
 		MediaType 3 "HeavyH/Heavy Paper H"
 		MediaType 4 "Transparency"
 		MediaType 5 "Envelope"
-		VariablePaperSize yes
 
+		MinSize 76.2mm 127.0mm
+		MaxSize 215.9mm 355.6mm		// US Legal
+		HWmargins 5mm 5mm 5mm 5mm
+		VariablePaperSize yes
+		*MediaSize A4
 		MediaSize A5
 		MediaSize A6
-		MediaSize B6
+		MediaSize B5
 		MediaSize C6
 		MediaSize EnvC5
 		MediaSize EnvC6
@@ -68,14 +71,14 @@ Version 0.1.3-emergency-fix-1
 		MediaSize SAC16K
 		MediaSize SAC32K
 
-		// Less Common Sizes
-		/*
+		/* Less Common Sizes
+		 *
 		 * Sizes A6 and larger, and no wider than US Legal have
 		 * been included here.
 		 *
-		 * PROTIP: Delete this section and recompile PPD, for a
-		 * less cluttered Paper Size menu in most applications,
-		 * if you don't use these sizes. If you use any of them,
+		 * PROTIP: Delete this section and recompile PPD, if you
+		 * end up with a cluttered page size menu in the the apps
+		 * you use most, if you don't use these sizes. Alternatively,
 		 * move the sizes you need from below to the section above,
 		 * then delete the rest.
 		 *
@@ -90,7 +93,7 @@ Version 0.1.3-emergency-fix-1
 		MediaSize A4Small	// Same dimensions as A4
 		MediaSize A4Plus	// Longer than Folio (F4) by just one point
 		MediaSize A5Extra
-		MediaSize B5
+		MediaSize B6
 		MediaSize B7
 		MediaSize DoublePostcard
 		MediaSize Env9
@@ -129,11 +132,9 @@ Version 0.1.3-emergency-fix-1
 		MediaSize Statement
 		// End Less Common Sizes
 
-		*ModelName "LBP3000 r2c"
-		FileName "Canon-LBP3000.ppd"
-		HWmargins 5mm 5mm 5mm 5mm 
-		MinSize 75mm 105mm
-		PCFileName "CNLB3K.ppd"
+		*ModelName "LBP2900/LBP3000 r2c"
+		FileName "Canon-LBP2900-3000.ppd"
+		PCFileName "CNLB2K9.ppd"
 	}
 }
 

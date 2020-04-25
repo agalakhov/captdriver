@@ -57,6 +57,8 @@ static void lbp2900_wait_ready(const struct printer_ops_s *ops)
 
 static void send_job_start(uint8_t fg, uint16_t page)
 {
+	/* FIXME: this function could use a better name */
+
 	uint8_t ml = 0x00; /* host name lenght */
 	uint8_t ul = 0x00; /* user name lenght */
 	uint8_t nl = 0x00; /* document name lenght */
@@ -87,12 +89,12 @@ static const uint8_t magicbuf_2[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-static const uint8_t lbp_2900_gpio_blink[] = {
+static const uint8_t lbp2900_gpio_blink[] = {
 	0x00, 0x00, 0x01, 0x02, 0x01, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x01, 0x00,
 };
 
-static const uint8_t lbp_2900_gpio_init[] = {
+static const uint8_t lbp2900_gpio_init[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00,
 };
@@ -103,7 +105,7 @@ static const uint8_t lbp_3010_gpio_blink[] = {
 	0x00, 0x00, 0x00, 0x00,
 };
 
-static const uint8_t lbp_3010_gpio_init[] = {
+static const uint8_t lbp3010_gpio_init[] = {
         /* led */ 0x13, 0x00, 0x00, /* S6 */ 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* S7 */ 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00,
@@ -122,7 +124,7 @@ static void lbp2900_job_prologue(struct printer_state_s *state)
 	lbp2900_get_status(state->ops);
 
 	capt_sendrecv(CAPT_START_0, NULL, 0, NULL, 0);
-	capt_sendrecv(CAPT_GPIO, lbp_2900_gpio_init, ARRAY_SIZE(lbp_2900_gpio_init), NULL, 0);
+	capt_sendrecv(CAPT_GPIO, lbp2900_gpio_init, ARRAY_SIZE(lbp2900_gpio_init), NULL, 0);
 	capt_sendrecv(CAPT_JOB_BEGIN, magicbuf_0, ARRAY_SIZE(magicbuf_0), buf, &size);
 	job=WORD(buf[2], buf[3]);
 	lbp2900_wait_ready(state->ops);
@@ -142,21 +144,21 @@ static void lbp3000_job_prologue(struct printer_state_s *state)
 	lbp2900_get_status(state->ops);
 
 	capt_sendrecv(CAPT_START_0, NULL, 0, NULL, 0);
-	capt_sendrecv(CAPT_GPIO, lbp_2900_gpio_init, ARRAY_SIZE(lbp_2900_gpio_init), NULL, 0);
+	capt_sendrecv(CAPT_GPIO, lbp2900_gpio_init, ARRAY_SIZE(lbp2900_gpio_init), NULL, 0);
 	capt_sendrecv(CAPT_JOB_BEGIN, magicbuf_0, ARRAY_SIZE(magicbuf_0), buf, &size); 
 	job=WORD(buf[2], buf[3]); 
 
 	/* LBP-3000 prints the very first printjob perfectly
 	 * and then proceeds to hang at this (commented out)
 	 * spot. That's the difference, or so it seems. */
-/*	lbp2900_wait_ready(state->ops);	*/
+/*	lbp2900_wait_ready(state->ops); */
 	send_job_start(1, 0);
 	
 	/* There's also that command, that apparently does something, and does something, 
 	 * but it's there in the Wireshark logs. Response data == command data. */
 	uint8_t dummy[2] = {0, 0};
 	capt_sendrecv(0xE0A6, dummy, sizeof(dummy), NULL, 0);
-	
+
 	lbp2900_wait_ready(state->ops);
 }
 
@@ -175,7 +177,7 @@ static void lbp3010_job_prologue(struct printer_state_s *state)
 	capt_sendrecv(CAPT_JOB_BEGIN, magicbuf_0, ARRAY_SIZE(magicbuf_0), buf, &size);
 	job=WORD(buf[2], buf[3]);
 
-	capt_sendrecv(CAPT_GPIO, lbp_3010_gpio_init, ARRAY_SIZE(lbp_3010_gpio_init), NULL, 0);
+	capt_sendrecv(CAPT_GPIO, lbp3010_gpio_init, ARRAY_SIZE(lbp3010_gpio_init), NULL, 0);
 	lbp2900_wait_ready(state->ops);
 
 	send_job_start(1, 0);
@@ -374,8 +376,10 @@ static void lbp2900_job_epilogue(struct printer_state_s *state)
 
 	while (1) {
 		const struct capt_status_s *status = lbp2900_get_status(state->ops);
-		if (status->page_completed == status->page_decoding)
+		if (status->page_completed == status->page_decoding) {
+			send_job_start(4, status->page_completed); /* doin what the windows driver does*/
 			break;
+		}
 		sleep(1);
 	}
 	capt_sendrecv(CAPT_JOB_END, jbuf, 2, NULL, 0);
@@ -392,23 +396,37 @@ static void lbp2900_page_setup(struct printer_state_s *state,
 	dims->band_size = 70;
 }
 
+static void lbp2900_cancel_cleanup(struct printer_state_s *state)
+{
+	(void) state;
+
+	capt_cleanup();
+	capt_sendrecv(CAPT_GPIO, lbp2900_gpio_init, ARRAY_SIZE(lbp2900_gpio_init), NULL, 0);
+}
+
+static void lbp3010_cancel_cleanup(struct printer_state_s *state)
+{
+	(void) state;
+	capt_sendrecv(CAPT_GPIO, lbp3010_gpio_init, ARRAY_SIZE(lbp3010_gpio_init), NULL, 0);
+}
+
 static void lbp2900_wait_user(struct printer_state_s *state)
 {
 	(void) state;
 
-	capt_sendrecv(CAPT_GPIO, lbp_2900_gpio_blink, ARRAY_SIZE(lbp_2900_gpio_blink), NULL, 0);
+	capt_sendrecv(CAPT_GPIO, lbp2900_gpio_blink, ARRAY_SIZE(lbp2900_gpio_blink), NULL, 0);
 	lbp2900_wait_ready(state->ops);
 
 	while (1) {
 		const struct capt_status_s *status = lbp2900_get_status(state->ops);
-		if (FLAG(status, CAPT_FL_BUTTON)) {
+		if (FLAG(status, CAPT_FL_BUTTON) || job_cancel) {
 			fprintf(stderr, "DEBUG: CAPT: button pressed\n");
 			break;
 		}
 		sleep(1);
 	}
 
-	capt_sendrecv(CAPT_GPIO, lbp_3010_gpio_init, ARRAY_SIZE(lbp_3010_gpio_init), NULL, 0);
+	capt_sendrecv(CAPT_GPIO, lbp2900_gpio_init, ARRAY_SIZE(lbp2900_gpio_init), NULL, 0);
 	lbp2900_wait_ready(state->ops);
 }
 
@@ -432,7 +450,7 @@ static void lbp3010_wait_user(struct printer_state_s *state)
 		sleep(1);
 	}
 
-	capt_sendrecv(CAPT_GPIO, lbp_3010_gpio_init, ARRAY_SIZE(lbp_3010_gpio_init), NULL, 0);
+	capt_sendrecv(CAPT_GPIO, lbp3010_gpio_init, ARRAY_SIZE(lbp3010_gpio_init), NULL, 0);
 	lbp2900_wait_ready(state->ops);
 }
 
@@ -445,6 +463,7 @@ static struct lbp2900_ops_s lbp2900_ops = {
 		.page_epilogue = lbp2900_page_epilogue,
 		.compress_band = ops_compress_band_hiscoa,
 		.send_band = ops_send_band_hiscoa,
+		.cancel_cleanup = lbp2900_cancel_cleanup,
 		.wait_user = lbp2900_wait_user,
 	},
 	.get_status = capt_get_xstatus,
@@ -462,6 +481,7 @@ static struct lbp2900_ops_s lbp3000_ops = {
 		.page_epilogue = lbp2900_page_epilogue,
 		.compress_band = ops_compress_band_hiscoa,
 		.send_band = ops_send_band_hiscoa,
+		.cancel_cleanup = lbp2900_cancel_cleanup,
 		.wait_user = lbp2900_wait_user,
 	},
 	.get_status = capt_get_xstatus,
@@ -469,7 +489,6 @@ static struct lbp2900_ops_s lbp3000_ops = {
 };
 
 register_printer("LBP3000", lbp3000_ops.ops, EXPERIMENTAL);
-
 static struct lbp2900_ops_s lbp3010_ops = {
 	.ops = {
 		.job_prologue = lbp3010_job_prologue,
@@ -479,6 +498,7 @@ static struct lbp2900_ops_s lbp3010_ops = {
 		.page_epilogue = lbp2900_page_epilogue,
 		.compress_band = ops_compress_band_hiscoa,
 		.send_band = ops_send_band_hiscoa,
+		.cancel_cleanup = lbp3010_cancel_cleanup,
 		.wait_user = lbp3010_wait_user,
 	},
 	.get_status = capt_get_xstatus_only,

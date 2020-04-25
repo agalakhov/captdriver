@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+bool job_cancel = false;
+
 struct printer_rec {
 	struct printer_rec *next;
 	const char *name;
@@ -47,6 +49,12 @@ static void __attribute__((destructor(101))) __clear_printers(void)
 		printer_recs = r->next;
 		free(r);
 	}
+}
+
+void cancel_job(int sig)
+{
+	(void) sig;
+	job_cancel = true;
 }
 
 static bool ieee_isspace(char c)

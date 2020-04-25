@@ -29,6 +29,8 @@ enum printer_support {
 	FULLY,
 };
 
+bool job_cancel;
+
 struct page_dims_s;
 
 struct printer_state_s {
@@ -51,11 +53,13 @@ struct printer_ops_s {
 		void *band, size_t size,
 		const void *pixels, unsigned line_size, unsigned num_lines);
 	void (*send_band) (struct printer_state_s *state, const void *band, size_t size);
+	void (*cancel_cleanup) (struct printer_state_s *state);
 	void (*wait_user) (struct printer_state_s *state);
 };
 
 const struct printer_ops_s *printer_detect(void);
 
+void cancel_job(int sig);
 
 void __printer_register_ops(const char *name, const struct printer_ops_s *ops,
 		enum printer_support status);

@@ -30,6 +30,7 @@
 
 static uint8_t capt_iobuf[0x10000];
 static size_t  capt_iosize;
+uint8_t sendrecv_status = NO_SENDRECV;
 
 static void capt_debug_buf(const char *level, size_t size)
 {
@@ -80,6 +81,7 @@ static void capt_send_buf(void)
 					(int) status);
 				exit(1);
 			}
+			sendrecv_status |= SENDRECV_SENT;
 		}
 	}
 }
@@ -98,6 +100,7 @@ static void capt_recv_buf(size_t offset, size_t expected)
 		exit(1);
 	}
 	capt_iosize = offset + size;
+	sendrecv_status |= SENDRECV_RECVD;
 }
 
 const char *capt_identify(void)
@@ -145,6 +148,7 @@ void capt_send(uint16_t cmd, const void *buf, size_t size)
 
 void capt_sendrecv(uint16_t cmd, const void *buf, size_t size, void *reply, size_t *reply_size)
 {
+	sendrecv_status = (NO_SENDRECV | RECV_REQUIRED);
 	capt_send(cmd, buf, size);
 	capt_recv_buf(0, 6);
 	if (capt_iosize != 6 || WORD(capt_iobuf[0], capt_iobuf[1]) != cmd) {
@@ -202,3 +206,16 @@ void capt_multi_send(void)
 	capt_iobuf[3] = HI(capt_iosize);
 	capt_send_buf();
 }
+
+void capt_cleanup(void)
+{
+	/* For use with handling job cancellations */
+	if (sendrecv_status && (RECV_REQUIRED || SENDRECV_SENT || !SENDRECV_RECVD) ){
+		uint8_t bs = 6;
+		if (capt_iosize > bs)
+			bs = capt_iosize;
+		cupsBackChannelRead(NULL, bs, 2);
+		sendrecv_status = NO_SENDRECV;
+	}
+}
+

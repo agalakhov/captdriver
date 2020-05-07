@@ -26,15 +26,21 @@ struct cups_page_header2_s;
 struct page_dims_s {
 	/* set by CUPS */
 	unsigned media_type;
+	unsigned paper_width_pts;
+	unsigned paper_height_pts;
 	unsigned paper_width;
 	unsigned paper_height;
 	unsigned toner_save;
-	unsigned margin_height;
-	unsigned margin_width;
+	unsigned h_dpi;
+	unsigned w_dpi;
+	bool pause;
 	/* set by printer ops */
 	unsigned line_size;
 	unsigned band_size;
 	unsigned num_lines;
+	uint16_t bound_a;
+	uint16_t bound_b;
+	uint8_t capt_size_id;
 };
 
 void page_set_dims(struct page_dims_s *dims, const struct cups_page_header2_s *header);

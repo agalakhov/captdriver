@@ -30,6 +30,8 @@
 
 static uint8_t capt_iobuf[0x10000];
 static size_t  capt_iosize;
+static cups_sc_status_t last_send_status = CUPS_SC_STATUS_NONE;
+static bool sendrecv_started = false;
 
 static void capt_debug_buf(const char *level, size_t size)
 {
@@ -57,7 +59,6 @@ static void capt_send_buf(void)
 	}
 
 	while (iosize) {
-		cups_sc_status_t status;
 		uint8_t tmpbuf[128];
 		size_t tmpsize = sizeof(tmpbuf);
 		size_t sendsize = iosize;
@@ -69,15 +70,16 @@ static void capt_send_buf(void)
 		iosize -= sendsize;
 		fflush(stdout);
 
-		status = cupsSideChannelDoRequest(CUPS_SC_CMD_DRAIN_OUTPUT,
+		last_send_status = cupsSideChannelDoRequest(CUPS_SC_CMD_DRAIN_OUTPUT,
 				(char *) tmpbuf, (int *) &tmpsize, 1.0);
-		if (status != CUPS_SC_STATUS_OK) {
-			if (status == CUPS_SC_STATUS_TIMEOUT) {
+
+		if (last_send_status != CUPS_SC_STATUS_OK) {
+			if (last_send_status == CUPS_SC_STATUS_TIMEOUT) {
 				/* Overcome race conditions in usb backend */
 				fprintf(stderr, "DEBUG: CAPT: output already empty, not drained\n");
 			} else {
 				fprintf(stderr, "ERROR: CAPT: no reply from backend, err=%i\n",
-					(int) status);
+					(int) last_send_status);
 				exit(1);
 			}
 		}
@@ -145,6 +147,9 @@ void capt_send(uint16_t cmd, const void *buf, size_t size)
 
 void capt_sendrecv(uint16_t cmd, const void *buf, size_t size, void *reply, size_t *reply_size)
 {
+	sendrecv_started = true;
+	last_send_status = CUPS_SC_STATUS_NONE;
+
 	capt_send(cmd, buf, size);
 	capt_recv_buf(0, 6);
 	if (capt_iosize != 6 || WORD(capt_iobuf[0], capt_iobuf[1]) != cmd) {
@@ -182,6 +187,9 @@ void capt_sendrecv(uint16_t cmd, const void *buf, size_t size, void *reply, size
 	}
 	if (reply_size)
 		*reply_size = capt_iosize;
+
+	sendrecv_started = false;
+	last_send_status = CUPS_SC_STATUS_NONE;
 }
 
 void capt_multi_begin(uint16_t cmd)
@@ -202,3 +210,30 @@ void capt_multi_send(void)
 	capt_iobuf[3] = HI(capt_iosize);
 	capt_send_buf();
 }
+
+void capt_cleanup(void)
+{
+	/* For use with handling job cancellations */
+	if (sendrecv_started) {
+
+		if (last_send_status != CUPS_SC_STATUS_OK) {
+			capt_send_buf();
+			fprintf(stderr, "DEBUG: CAPT: finished interrupted send\n");
+		}
+
+		/* not else because recv cleanup is needed after finishing send */
+		if (last_send_status == CUPS_SC_STATUS_OK) {
+			size_t bytes = 0x10000;
+			size_t bs = 64;
+			while(bytes > 0) {
+				bytes -= bs;
+				cupsBackChannelRead(NULL, bs, 0.01);
+			}
+			fprintf(stderr, "DEBUG: CAPT: finished interrupted recv\n");
+		}
+
+	capt_iosize = 0;
+	sendrecv_started = false;
+	}
+}
+

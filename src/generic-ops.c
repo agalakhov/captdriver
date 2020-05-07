@@ -39,6 +39,8 @@ size_t ops_compress_band_hiscoa(struct printer_state_s *state,
 
 void ops_send_band_hiscoa(struct printer_state_s *state, const void *data, size_t size)
 {
+	(void) job_cancel; /* suppress unused static variable warning */
+
 	const uint8_t *pdata = (const uint8_t *) data;
 	while (size) {
 		size_t send = 0xFF00;

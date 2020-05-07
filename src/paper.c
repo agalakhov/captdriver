@@ -25,11 +25,28 @@ void page_set_dims(struct page_dims_s *dims, const struct cups_page_header2_s *h
 	dims->media_type = header->cupsMediaType;
 	dims->paper_width  = header->PageSize[0] * header->HWResolution[0] / 72;
 	dims->paper_height = header->PageSize[1] * header->HWResolution[1] / 72;
+	dims->margin_width = header->Margins[0] * header->HWResolution[0] / 72;
+	dims->margin_height = header->Margins[1] * header->HWResolution[1] / 72;;
+
+	if (dims->auto_set) {
+		/* Assume image margin is equal on both sides */
+		unsigned cut_width = (header->PageSize[0] - header->Margins[0]*2);
+		unsigned cut_height = (header->PageSize[1] - header->Margins[1]*2);
+		unsigned const *res = header->HWResolution;
+		dims->line_size = (cut_width * res[1] / 72)/8;
+		dims->num_lines = cut_height * res[0] / 72;
+		/* Increase line size to next larger value divisible by 4 */
+		while(dims->line_size & 0x02) {
+			dims->line_size += 1;
+		}
+		/* Increase line count to next larger value divisible by 4 */
+		while(dims->num_lines & 0x02) {
+			dims->num_lines += 1;
+		}
+	}
 	/* 
 		The use of cupsCompression to toggle toner save was inspired by the
 	 	use of the same attribute to control darkness in label printer drivers.
 	*/
 	dims->toner_save = header->cupsCompression; 
-	dims->margin_height = header->Margins[0];
-	dims->margin_width = header->Margins[1];
 }

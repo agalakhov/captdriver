@@ -19,12 +19,14 @@ Build
 -----
 
 The project uses GNU Autotools to build the driver.
-Run the following commands after cloning the repo:
+Run the following commands after cloning the repo to build the driver:
 
 ```
 $ aclocal
 $ autoconf
 $ automake --add-missing
+$ ./configure
+$ make
 ```
 
 Install

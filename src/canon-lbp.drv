@@ -15,122 +15,139 @@
 Copyright "(C)2020 Moses Chong"
 ColorModel "Gray/Grayscale" k chunky 2 
 Filter application/vnd.cups-raster 1 rastertocapt 
-*Manufacturer "Canon Inc"
-Version 0.1.3 
+*Manufacturer "Canon"
+Version 0.1.4-m5
 {
 	Font *
 	
-	// Common Sizes
-	*MediaSize A4
-	MediaSize A5
-	MediaSize A6
-	MediaSize B6
-	MediaSize C6
-	MediaSize EnvC5
-	MediaSize EnvC6
-	MediaSize EnvChou3
-	MediaSize EnvDL
-	MediaSize Env10
-	MediaSize EnvItalian
-	MediaSize Executive	// US 7.25x10.5 inch
-	MediaSize Folio	// SE Asian F4
-	MediaSize Legal
-	MediaSize Letter
-	MediaSize SISG5
-	MediaSize SISE5
-	MediaSize SAC16K
-	MediaSize SAC32K
-
-	// Less Common Sizes
-	/* 
-	 * Sizes A6 and larger, and no wider than US Legal have 
-	 * been included here.
-	 *
-	 * PROTIP: Delete this section and recompile PPD, for a
-	 * less cluttered Paper Size menu in most applications,
-	 * if you don't use these sizes. If you use any of them,
-	 * move the sizes you need from below to the section above,
-	 * then delete the rest.
-	 *
-	 * NOTE: Some of the sizes appear to be identical to
-	 * another at least in terms of width and length. There
-	 * could be other differences, and may be useful in managing
-	 * multiple trays on printers that support them.
-	 *
-	 */
-	MediaSize 7x9
-	MediaSize 8x10
-	MediaSize A4Small	// Same dimensions as A4
-	MediaSize A4Plus	// Longer than Folio (F4) by just one point
-	MediaSize A5Extra
-	MediaSize B5
-	MediaSize B7
-	MediaSize DoublePostcard
-	MediaSize Env9
-	MediaSize Env11
-	MediaSize Env12
-	MediaSize Env14
-	MediaSize EnvC65
-	MediaSize EnvChou4
-	MediaSize EnvISOB5
-	MediaSize EnvISOB6
-	MediaSize EnvKaku3
-	MediaSize EnvMonarch
-	MediaSize EnvPersonal
-	MediaSize EnvPRC1
-	MediaSize EnvPRC2
-	MediaSize EnvPRC3
-	MediaSize EnvPRC4
-	MediaSize EnvPRC5
-	MediaSize EnvPRC6
-	MediaSize EnvPRC7
-	MediaSize EnvPRC8
-	MediaSize EnvYou4
-	MediaSize FanFoldGerman
-	MediaSize FanFoldGermanLegal
-	MediaSize ISOB5
-	MediaSize ISOB5Extra
-	MediaSize ISOB6
-	MediaSize ISOB7
-	MediaSize LetterPlus
-	MediaSize Note		// Same dimensions as Letter (US)
-	MediaSize Postcard
-	MediaSize PRC16K
-	MediaSize PRC32K
-	MediaSize PRC32KBig
-	MediaSize Quarto
-	MediaSize Statement
-	// End Less Common Sizes
-
-	// Toner Save Option
+	/* Toner Save Option */
 	Option "captTonerSave/Toner Save" Boolean AnySetup 10 
-		*Choice False/Disabled "<</cupsCompression 0>>setpagedevice"
-		Choice True/Enabled "<</cupsCompression 1>>setpagedevice"
+		*Choice False/Disabled "<</cupsInteger0 0>>setpagedevice"
+		Choice True/Enabled "<</cupsInteger0 1>>setpagedevice"
+
+	/* Pause After Each Page Option */
+	Option "pauseAfterEachPage/Pause After Each Page" Boolean AnySetup 11
+		*Choice False/No "<</cupsInteger1 0>>setpagedevice"
+		Choice True/Yes "<</cupsInteger1 1>>setpagedevice"
 
 	*Resolution k 1 70 592 0 "600dpi/600 DPI"
-	MaxSize 215.9mm 355.6mm		// US Legal
-	MediaType 0 "Plain/Plain Paper"
-	MediaType 1 "Heavy/Heavy Paper"
-	MediaType 2 "PlainL/Plain Paper L"
-	MediaType 3 "HeavyH/Heavy Paper H"
-	MediaType 4 "Transparency"
-	MediaType 5 "Envelope"
-	VariablePaperSize yes
 	{
-		// nearly matched to Alexey Galakhov's original 2011 specs
+		/* LBP 3010 */
+		/* nearly matched to Alexey Galakhov's original 2011 specs */
 		*ModelName "LBP2900/LBP3010 r2c"
-		FileName "Canon-LBP2900.ppd"
+		*MediaSize A4
+		FileName "Canon-LBP3010.ppd"
 		MinSize 75mm 105mm
 		HWmargins 4.7095835mm 4.7095835mm 4.709583mm 4.709583mm 
-		PCFileName "CNLB2K9.ppd"
+		PCFileName "CNLB3K10.ppd"
 	}
 
 	{
-		*ModelName "LBP3000 r2c"
-		FileName "Canon-LBP3000.ppd"
-		HWmargins 5mm 5mm 5mm 5mm 
-		MinSize 75mm 105mm
-		PCFileName "CNLB3K.ppd"
+		/* LBP 2900/3000, with multi-page size and type support */
+		MediaType 0 "Plain/Plain Paper"
+		MediaType 1 "Heavy/Heavy Paper"
+		MediaType 2 "PlainL/Plain Paper L"
+		MediaType 3 "HeavyH/Heavy Paper H"
+		MediaType 4 "Transparency"
+		MediaType 5 "Envelope"
+
+		MinSize 76.2mm 127.0mm
+		MaxSize 215.9mm 355.6mm		// US Legal
+		HWmargins 5mm 5mm 5mm 5mm
+
+		/*
+		 * NOTE: Some of the sizes appear to be identical to
+		 * another at least in terms of width and length. There
+		 * could be other differences, and may be useful in managing
+		 * multiple trays on printers that support them.
+		 *
+		 */
+
+		/* Common Document Sizes */
+		VariablePaperSize yes
+		*MediaSize A4
+		MediaSize A5
+		MediaSize B5
+		MediaSize Executive	// US 7.25x10.5 inch
+		MediaSize Folio	// SE Asian F4
+		MediaSize Legal
+		MediaSize Letter
+		MediaSize SISG5
+		MediaSize SISE5
+		MediaSize SAC16K
+		MediaSize SAC32K
+
+		/* Less Common Document Sizes
+		 *
+		 * PROTIP: Delete this section and recompile PPD, if page size
+		 * menus in your most used apps clutter up and cannot be managed. 
+		 * Any size below may be moved to the list above, before deleting
+		 * this section.
+		 */
+		MediaSize 8x10
+		MediaSize A4Small	// Same dimensions as A4
+		MediaSize A4Plus	// Longer than Folio (F4) by just one point
+		MediaSize A5Extra
+		MediaSize A6
+		MediaSize B6
+		MediaSize B7
+		MediaSize DoublePostcard
+		MediaSize FanFoldGerman
+		MediaSize FanFoldGermanLegal
+		MediaSize ISOB5
+		MediaSize ISOB5Extra
+		MediaSize ISOB6
+		MediaSize ISOB7
+		MediaSize LetterPlus
+		MediaSize Note		// Same dimensions as Letter (US)
+		MediaSize Postcard
+		MediaSize PRC16K
+		MediaSize PRC32K
+		MediaSize PRC32KBig
+		MediaSize Quarto
+		MediaSize Statement
+
+		/* Common Envelope Sizes */
+		HWmargins 10mm 10mm 10mm 10mm
+		MediaSize Env10
+		MediaSize EnvC5
+		MediaSize EnvChou4
+		MediaSize EnvDL
+		MediaSize EnvItalian
+
+		/* Less Common Envelope Sizes */
+		/*
+		 * PROTIP: Delete this section as necessary. If any size below
+		 * is needed, move it to the list above before deleting this section.
+		 *
+		 */
+		MediaSize 7x9
+		MediaSize C6
+		MediaSize Env9
+		MediaSize Env11
+		MediaSize Env12
+		MediaSize Env14
+		MediaSize EnvC6
+		MediaSize EnvC65
+		MediaSize EnvChou3
+		MediaSize EnvISOB5
+		MediaSize EnvISOB6
+		MediaSize EnvKaku3
+		MediaSize EnvMonarch
+		MediaSize EnvPersonal
+		MediaSize EnvPRC1
+		MediaSize EnvPRC2
+		MediaSize EnvPRC3
+		MediaSize EnvPRC4
+		MediaSize EnvPRC5
+		MediaSize EnvPRC6
+		MediaSize EnvPRC7
+		MediaSize EnvPRC8
+		MediaSize EnvYou4
+
+		*ModelName "LBP2900/LBP3000 r2c"
+		FileName "Canon-LBP2900-3000.ppd"
+		PCFileName "CNLB2K9.ppd"
 	}
 }
 

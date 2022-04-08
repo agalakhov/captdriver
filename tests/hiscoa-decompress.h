@@ -1,7 +1,7 @@
 #pragma once
 
-#include "std.h"
-#include "hiscoa-common.h"
+#include "../src/std.h"
+#include "../src/hiscoa-common.h"
 
 unsigned hiscoa_decompress_band(
 	const void **band, size_t *size,

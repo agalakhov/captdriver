@@ -63,3 +63,4 @@ void capt_sendrecv(uint16_t cmd, const void *buf, size_t size, void *reply, size
 void capt_multi_begin(uint16_t cmd);
 void capt_multi_add(uint16_t cmd, const void *data, size_t size);
 void capt_multi_send(void);
+void capt_cleanup(void);

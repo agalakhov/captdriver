@@ -57,6 +57,7 @@ enum capt_flags
 	/* status[3] */
 	CAPT_FL_POWERUP1     = _FL(3, 12),
 	/* status[4] */
+	CAPT_FL_BUTTON_ON    = _FL(4, 0),
 	/* status[5] */
 	/* status[6] */
 };

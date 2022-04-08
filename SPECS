@@ -144,6 +144,15 @@ Status bits:
    11-0:  0
 
   STATUS4
+  15-8:   0
+     7:   0
+     6:   1
+     5:   Button blinking
+     4:   1
+     3:
+     2:
+     1:   0 ready, 1 stop
+     0:   Button active
 
   STATUS5
 
@@ -159,19 +168,92 @@ All 0xD0xx commands have no reply. They all are one-way.
 
 * 0xD0A0
 Page parameters. Mandatory. Issued before each page.
-  0-11:  ? 00 00 30 2a 02 00 00 00 1f 1f 1f 1f
-                       ^^ related to page dimensions? letter=0d, A4=02
-  12:    00 paper type A? 00 = plain, 01 = thick
-  13-18: ? 11 04 00 01 01 02
-  19:    toner saving (0 = no, 1 = yes)
-  20-25: ? 00 00 78 00 60 00
+  0-1:  ? 00 00
+  2-3:  ? 30 2a
+          ^^ ^^ fixed vaules, differs with model:
+                30 2a    lpb2900
+                ?? ??    lpb3000
+                ba 09    lbp3010
+  4-7:  ? 02 00 00 00
+          ^^ related to page dimensions:
+                media size   lpb2900   lpb3000   lpb3010
+                A4 (default)    ??        ??        02
+                A5              ??        ??        03
+                B5              ??        ??        07
+                Executive       ??        ??        0a
+                Legal           ??        ??        0c
+                Letter          ??        ??        0d
+                EnvC5           ??        ??        15
+                Env10           ??        ??        16
+                EnvMonarch      ??        ??        17
+                EnvDL           ??        ??        18
+                3x5             ??        ??        40
+                PRC16K          ??        ??        d4
+  8-11:  1c 1c 1c 1c
+         ^^ toner density (black): only bits from 2 to 5 are used, other never change:
+                7-6:  0
+                5-2:  exadecimal value of the blak toner density
+                1-0:  0 (1 for lbp3010, but also works with 0)
+            Toner density range changes from model to model:
+                0-7     lbp2900 (3 bits used)
+                0-7     lbp3000 (3 bits used)
+                0-15    lbp3010 (4 bits used)
+            Dafaul values:
+                1c      lbp2900 (bits 0,1,7,8 are always 0)
+                ??      lbp3000 (??)
+                1f      lbp3010 (bits 0,1 are always 1, bits 7,8 are always 0)
+            Bytes from 9 to 11 could be used in color printers (maybe for yellow,magenta and cyan)
+  12:    paper type, often this requires other bytes changes:
+                media type   lpb2900   lpb3000   lpb3010
+                Plain           00        ??        01
+                Plain L         ??        ??        08
+                Thick           ??        ??        04*
+                Thick H         ??        ??        05*
+                Transparency    24        ??        24
+                Label           ??        ??        04*
+                Envelope        20        ??        20*
+
+                media size   lpb2900   lpb3000   lpb3010
+                A4 (default)    ??        ??        ??
+                A5              ??        ??        21*
+                B5              ??        ??        21*
+                Executive       ??        ??        21*
+                Legal           ??        ??        ??
+                Letter          ??        ??        ??
+                EnvC5           ??        ??        21*
+                Env10           ??        ??        21*
+                EnvMonarch      ??        ??        21*
+                EnvDL           ??        ??        21*
+                3x5             ??        ??        21*
+                PRC16K          ??        ??        ??
+
+                *lbp3010: also set byte 13 at 11
+
+                30      ? Special Print Mode            (see byte 34)
+  13:    ? related to page size, maybe adapt to size:
+                11      ? default for lbp2900, in lbpp3010 used with all page size except Legal, 16k, A4, Letter
+                81      ? default for lbp3010, never seen in lbp2900
+  14-18: ? 04 00 01 01 02
+  19:    toner saving (0 = no, 1 = yes). Unused with some model such as in lbp3010 for which toner density setting is effective.
+  20-21: ? 00 00
+  22-23: uint16_t image margin height, lower first.
+  24-25: uint16_t image margin width, lower first.
   26-27: uint16_t image width (line size in bytes) = LINESIZE for compressor
   28-29: uint16_t image height (number of lines)
   30-31: uint16_t paper width (pixels = inches * 600)
   32-33: uint16_t paper height (pixels = inches * 600)
   -- Older printers have only 34 bytes
   34-35: ? 00 00
-  36:    01 paper type B? 01 = plain, 02 = thick
+           ^^ in lbp3010 is 01 with Special Print Mode
+  36:    ? fuser mode:
+                 media type    lpb2900   lpb3000   lpb3010
+                 Plain (default)  01        ??        01
+                 Plain L          01        ??        01
+                 Thick            01        ??        02
+                 Thick H          02        ??        02
+                 Transparency     13        ??        13
+                 Label            ??        ??        14
+                 Envelope         1c        ??        1c
   37-39: ? 00 00 00
 
 
@@ -330,4 +412,3 @@ other values are typically
  L2 = -5, L3 = 4, L4 = 384, L5 = 12, LINESIZE = 592
 The actual values are probably optimized for certain dithering algorithm. They
 rarely change but are not constant for the printer.
-

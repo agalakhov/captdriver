@@ -51,6 +51,7 @@ struct printer_ops_s {
 		void *band, size_t size,
 		const void *pixels, unsigned line_size, unsigned num_lines);
 	void (*send_band) (struct printer_state_s *state, const void *band, size_t size);
+	void (*cancel_cleanup) (struct printer_state_s *state);
 	void (*wait_user) (struct printer_state_s *state);
 };
 

@@ -40,9 +40,20 @@ struct band_list_s {
 	size_t size;
 	uint8_t data[];
 };
+
+/* printer and job state */
+const struct printer_ops_s *ops;
+struct printer_state_s *state = NULL;
+struct cached_page_s *cached_page = NULL;
+cups_raster_t *raster;
+
+/* compressor state */
+uint8_t *linebuf = NULL;
+uint8_t *bandbuf = NULL;
+uint8_t *compbuf = NULL;
+
 static inline size_t sizeof_struct_band_list_s(size_t size)
 	{ return sizeof(struct band_list_s) + size; }
-
 
 static size_t center_pixels(size_t small, size_t large, unsigned bpp)
 {
@@ -57,6 +68,43 @@ static size_t center_pixels(size_t small, size_t large, unsigned bpp)
 	return bypp * ((large_p - small_p) / 2);
 }
 
+static void free_cached_page(struct cached_page_s *cached_page)
+{
+	while (cached_page->bands) {
+		void *p = cached_page->bands;
+		cached_page->bands = cached_page->bands->next;
+		free(p);
+	}
+	free(cached_page);
+}
+
+static void free_state(void)
+{
+	if (state) {
+		if (ops->free_state)
+			ops->free_state(state);
+		else
+			free(state);
+		state = NULL;
+	}
+}
+
+static void free_buffers(void)
+{
+	if (compbuf) {
+		free(compbuf);
+		compbuf = NULL;
+	}
+	if (bandbuf) {
+		free(bandbuf);
+		bandbuf = NULL;
+	}
+	if (linebuf) {
+		free(linebuf);
+		linebuf = NULL;
+	}
+}
+
 static void compress_page_data(struct printer_state_s *state,
 		struct cached_page_s *page,
 		cups_raster_t *raster,
@@ -64,9 +112,6 @@ static void compress_page_data(struct printer_state_s *state,
 {
 	const struct page_dims_s *dims = &page->dims;
 	const unsigned compsize = 2 * dims->line_size * dims->band_size;
-	uint8_t *linebuf = NULL;
-	uint8_t *bandbuf = NULL;
-	uint8_t *compbuf = NULL;
 
 	struct band_list_s *last_band = NULL;
 	unsigned i;
@@ -146,12 +191,7 @@ static void compress_page_data(struct printer_state_s *state,
 	for (i = dims->num_lines; i < header->cupsHeight; ++i)
 		cupsRasterReadPixels(raster, linebuf, header->cupsBytesPerLine);
 
-	if (compbuf)
-		free(compbuf);
-	if (bandbuf)
-		free(bandbuf);
-	if (linebuf)
-		free(linebuf);
+	free_buffers();
 }
 
 static void send_page_data(struct printer_state_s *state, const struct cached_page_s *page)
@@ -165,14 +205,36 @@ static void send_page_data(struct printer_state_s *state, const struct cached_pa
 		state->ops->send_band(state, band->data, band->size);
 }
 
+static void do_cancel(int s)
+{
+	(void) s;
+	fprintf(stderr, "DEBUG: CAPT: begin job cancellation cleanup\n");
+
+	if (ops)
+		ops->cancel_cleanup(state);
+
+	if (raster) {
+		cupsRasterClose(raster);
+		raster = NULL;
+	}
+
+	free_buffers();
+
+	if (cached_page) {
+		free_cached_page(cached_page);
+		cached_page = NULL;
+	}
+
+	if (state)
+		free_state();
+
+	fprintf(stderr, "DEBUG: CAPT: job cancellation cleanup complete\n");
+	exit(1);
+}
+
 static void do_print(int fd)
 {
-	const struct printer_ops_s *ops;
-	struct printer_state_s *state = NULL;
-	struct cached_page_s *cached_page = NULL;
 	bool in_job = false;
-	cups_raster_t *raster;
-
 	ops = printer_detect();
 
 	if (ops->alloc_state)
@@ -269,19 +331,31 @@ static void do_print(int fd)
 		fprintf(stderr, "ERROR: CAPT: no pages in job\n");
 
 	cupsRasterClose(raster);
-
-	if (state) {
-		if (ops->free_state)
-			ops->free_state(state);
-		else
-			free(state);
-		state = NULL;
-	}
+	free_state();
 }
 
 
 int main(int argc, char *argv[])
 {
+
+#if POSIX_C_SOURCE >= 199309L
+	struct sigaction act_ign;
+	struct sigaction act_cancel;
+
+	/* ignore SIGPIPE */
+	act_ign.sa_handler = SIG_IGN;
+	sigemptyset(&act_ign.sa_mask);
+	sigaction(SIGPIPE, &act_ign, NULL);
+	/* handle SIGTERM */
+	act_cancel.sa_handler = do_cancel();
+	sigemptyset(&act_cancel.sa_mask);
+	sigaddset(&act_cancel.sa_mask, SIGINT);
+	sigaction(SIGTERM, &act_cancel, NULL);
+#else
+	signal(SIGPIPE, SIG_IGN);
+	signal(SIGTERM, do_cancel);
+#endif
+
 	int fd = 0;
 
 	if (argc < 6 || argc > 7) {
@@ -298,7 +372,6 @@ int main(int argc, char *argv[])
 	}
 
 	fprintf(stderr, "DEBUG: CAPT: rastertocapt started\n");
-	signal(SIGPIPE, SIG_IGN);
 	do_print(fd);
 	fprintf(stderr, "DEBUG: CAPT: rastertocapt finished\n");
 

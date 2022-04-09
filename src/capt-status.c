@@ -36,8 +36,9 @@ static inline char bit(enum capt_flags flag)
 
 static void print_status(void)
 {
-	fprintf(stderr, "DEBUG: CAPT: printer status P1=%c P2=%c B=%c B1=%c nE=%c\n",
+	fprintf(stderr, "DEBUG: CAPT: printer status P1=%c P2=%c B=%c B0=%c B1=%c nE=%c\n",
 		bit(CAPT_FL_NOPAPER1), bit(CAPT_FL_NOPAPER2),
+		bit(CAPT_FL_BUTTON_ON),
 		bit(CAPT_FL_BUTTON), bit(CAPT_FL_BUTTON1),
 		bit(CAPT_FL_nERROR)
 	);

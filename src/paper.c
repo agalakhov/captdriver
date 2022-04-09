@@ -19,17 +19,24 @@
 
 #include "paper.h"
 #include <cups/raster.h>
+#include <stdio.h>
 
 void page_set_dims(struct page_dims_s *dims, const struct cups_page_header2_s *header)
 {
 	dims->media_type = header->cupsMediaType;
-	dims->paper_width  = header->PageSize[0] * header->HWResolution[0] / 72;
-	dims->paper_height = header->PageSize[1] * header->HWResolution[1] / 72;
-	/* 
-		The use of cupsCompression to toggle toner save was inspired by the
-	 	use of the same attribute to control darkness in label printer drivers.
-	*/
-	dims->toner_save = header->cupsCompression; 
+	strncpy(dims->media_size, header->MediaType, 64);
+	dims->paper_width  = header->cupsWidth;  //header->PageSize[0] * header->HWResolution[0] / 72;
+	dims->paper_height = header->cupsHeight; //header->PageSize[1] * header->HWResolution[1] / 72;
+	dims->toner_save = header->cupsInteger[0];
+	dims->ink_k = header->cupsInteger[1];
+	dims->line_size = header->PageSize[0];
+	dims->num_lines = header->cupsHeight;
+	dims->band_size = header->cupsRowCount;
 	dims->margin_height = header->Margins[0];
 	dims->margin_width = header->Margins[1];
+
+	if (header->HWResolution[1] == 400)
+	  dims->media_adapt  = 0x81;
+	else
+	  dims->media_adapt  = 0x11;
 }

@@ -1,6 +1,4 @@
-
-#include "../src/word.h"
-#include "scoa-decompress.h"
+#include "word.h"
 #include "hiscoa-decompress.h"
 
 #include <stdbool.h>
@@ -19,7 +17,6 @@ static struct page page;
 
 static bool hi_mode = false;
 static unsigned line_size;
-static uint8_t *buffer_line;
 static struct hiscoa_params hiscoa_params;
 
 static uint8_t *page_reserve(size_t size)
@@ -64,6 +61,8 @@ static void dump(const uint8_t *buf, size_t size)
 
 static void decode_hiscoa_params(const uint8_t *buf, size_t size)
 {
+	(void) size;
+
 	hiscoa_params.origin_3 = (int8_t)buf[0];
 	hiscoa_params.origin_5 = (int8_t)buf[1];
 	/* buf[2] - ??? */
@@ -98,14 +97,20 @@ static void decode_hiscoa_band_data(const uint8_t *buf, size_t size, unsigned li
 
 static void decode_hiscoa_band(const uint8_t *buf, size_t size)
 {
-	unsigned lines = WORD(buf[0], buf[1]);
-	decode_hiscoa_band_data(buf + 2, size - 2, lines);
+	unsigned lines = WORD(buf[2], buf[3]);
+	decode_hiscoa_band_data(buf + 4, size - 4, lines);
+}
+
+static void decode_hiscoa_band2(const uint8_t *buf, size_t size)
+{
+	unsigned lines = WORD(buf[2], buf[3]);
+	decode_hiscoa_band_data(buf + 6, size - 6, lines);
 }
 
 static void decode_hiscoa_band3(const uint8_t *buf, size_t size)
 {
-	unsigned lines = WORD(buf[0], buf[1]);
-	decode_hiscoa_band_data(buf + 6, size - 6, lines);
+	unsigned lines = WORD(buf[2], buf[3]);
+	decode_hiscoa_band_data(buf + 8, size - 8, lines);
 }
 
 static void dispatch(uint16_t cmd, const uint8_t *buf, size_t size)
@@ -126,9 +131,6 @@ static void dispatch(uint16_t cmd, const uint8_t *buf, size_t size)
 		dump(buf, size);
 		line_size = WORD(buf[26], buf[27]);
 		fprintf(stderr, "  decoded: L=%u bytes, %u pixels\n", line_size, line_size * 8);
-		buffer_line=calloc(line_size, sizeof(uint8_t));
-		if (! buffer_line)
-			abort();
 		break;
 	case 0xD0A4:
 		fprintf(stderr, "  -(Hi-SCoA parameters)-\n");
@@ -142,6 +144,7 @@ static void dispatch(uint16_t cmd, const uint8_t *buf, size_t size)
 		break;
 	case 0xC0A0:
 		if (! hi_mode) {
+			fprintf(stderr, "  -(SCoA data)-\n");
 			dump(buf, 16);
 		} else {
 			fprintf(stderr, "  -(Hi-SCoA data from printer debug)-\n");
@@ -151,12 +154,12 @@ static void dispatch(uint16_t cmd, const uint8_t *buf, size_t size)
 		break;
 	case 0x8000:
 		fprintf(stderr, "  -(Hi-SCoA data)-\n");
-		dump(buf + 2, 4);
-		decode_hiscoa_band(buf, size);
+		dump(buf, 4);
+		decode_hiscoa_band2(buf, size);
 		break;
 	case 0x8200:
 		fprintf(stderr, "  -(Hi-SCoA data)-\n");
-		dump(buf + 6, 4);
+		dump(buf, 4);
 		decode_hiscoa_band3(buf, size);
 		break;
 	case 0xC0A4:
@@ -171,7 +174,6 @@ static void dispatch(uint16_t cmd, const uint8_t *buf, size_t size)
 
 int main(int argc, char **argv)
 {
-	unsigned iband;
 	static uint8_t buf[1<<20];
 
 	FILE *input = stdin;
@@ -226,24 +228,11 @@ int main(int argc, char **argv)
 			fprintf(stderr, "! unable to read %li bytes\n", len - pos);
 			break;
 		}
-		switch (cmd) {
-		case 0x8000:
-			dispatch(cmd, buf + pos, len - pos);
-			break;
-		case 0x8200:
-			dispatch(cmd, buf + pos - 6, len - pos + 6);
-			break;
-		default:
-			dispatch(cmd, buf + pos, len - pos);
-			break;
-		}
+		dispatch(cmd, buf + pos, len - pos);
 	}
 
 	if (page.size)
 		page_output();
-
-	if (buffer_line)
-		free(buffer_line);
 
 	if (argc > 1)
 		fclose(input);

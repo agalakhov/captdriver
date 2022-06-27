@@ -7,6 +7,8 @@ Reverse engineering done by:
 2010 Alexey Galakhov (LBP-2900)
 2010 Benoit Bolsee (LBP-3010)
 2013 Alexey Galakhov - summarized everything and corrected errors
+2022 @missla (github.com/missla) - additional info on status and page params
+2022 Moses Chong - added SCoA specs, based on Nicolas Boichat's work
 
 1. A0-command protocol
 ======================
@@ -288,7 +290,121 @@ Used to send multiple 0xD0nn commands in a row on printers that support it.
 2. SCoA compression algorithm
 =============================
 
-To be written.
+SCoA data are compressed line by line. The line size is specified in bytes 26-27
+in the 0xD0A0 command (See section 1.4) and remains the same for all lines on
+the same page. Lines may be compressed independently, but delta coding between
+lines is supported to further reduce data size.
+
+2.1. Data encoding
+-----------------
+
+SCoA data are represented as a bit stream. Bits are written MSB first. The
+stream is 1-byte aligned throughout. Opcodes are byte-sized, and data is encoded
+by the byte. The stream is treated the same way on little and big-endian
+machines.
+
+Example: 1,0,1,0,0,0,0,1,1,1,0,0,0,0,0,0 corresponds to A1 C0.
+
+The data are sent in the clear. There is no scrambling or obfuscation.
+
+2.2. Command encoding
+---------------------
+
+The bitstream contains commands that determine how the compressed data are
+expanded. Commands seem to be bit-sized, but may be treated as bytecodes as
+the opcodes are byte-aligned.
+
+There are three fundamental write-out commands:
+P(x);      x bytes, from the current line offset, from the previous line
+R(x, c);   x repeats of byte c
+N(x, s);   non-compressed byte string s of length x
+
+Write-out commands are encoded in pairs in bytecode for efficiency.
+
+The following bytecodes are known:
+Command 0b00xxxWWW s0..sn     P(0bWWW); N(0bxxx, s0..sn);
+Command 0b01xxxWWW c          P(0bWWW); R(0bxxx, c);
+Command 0b11wwwxxx c s0..sn   R(0bwww, c); N(0bxxx, s0..sn);
+  ### if www or xxx is zero, output R(0bwww + 0bxxx, 0x0); instead
+Command 0b100UUUUU
+  subcmd 0b00xxxWWW s0..sn    P(0bUUUUUWWW); N(0bxxx, s0..sn);
+  subcmd 0b01xxxWWW c         P(0bUUUUUWWW); R(0bxxx, c);
+  subcmd 0b101xxxxx
+    subcmd 0b10yyyWWW c       P(0bUUUUUWWW); R(0bxxxxxyyy, c);
+    subcmd 0b11yyyWWW s0..sn  P(0bUUUUUWWW); N(0bxxxxxyyy, s0..sn);
+Command 0b101wwwww:
+  subcmd 0b00xxxyyy c s0..sn  R(0bwwwwxxx, c); N(0byyy, s0..sn);
+  subcmd 0b01xxxyyy c s0..sn  R(0bxxx, c); N(0bwwwwwyyy, s0..sn);
+  subcmd 0b10xxxYYY c         P(0bYYY); R(0bwwwwwxxx, c);
+  subcmd 0b11xxxYYY s0..sn    P(0bYYY); N(0bwwwwwxxx, s0..sn);
+Command 0b10011111 (0x9F) Add 248 bytes to 0b100UUUUU 0b00 or 0b01
+Command 0b01000000 (0x40) NOP
+Command 0b01000001 (0x41) End of Line (EOL), same as P(line_size - current_pos)
+Command 0b01000010 (0x42) End of Page (EOP)
+
+Notes:
+0b => binary; 0x => hexadecimal;
+Byte counts for P() are in uppercase.
+Names are not official and were created for this document.
+
+2.3. Algorithm description
+--------------------------
+
+SCoA is a run length encoding (RLE) and delta codec. Data are first divided into
+byte-sized lines. Repeated bytes are RLE-compressed with the R command.
+Uncompressible bytes are embedded with the N command. The P command fills in
+parts of a line that have not changed from the previous line.
+
+If there is not enough room at the end of a line to finish an R or N command,
+the remaining bytes are written at the beginning of the next line. P commands
+must stay within the bounds of the current line.
+
+The line size is important as it maintains boundaries which is essential for the
+P command to work. The commands can only work on whole bytes, or groups of eight
+bits.
+
+2.3.1. SCoA compression example 1
+---------------------------------
+Line size = 16 bytes
+FF FF FF FF FF FF FF FF 9A 9A 9A 9A 5A 5A 5A 5A
+00 FF FF FF FF FF FF FF 9A 9A 9A 9A 5A 5A 5A 1A
+
+The first line may be encoded as R(8, 0xFF), R(4, 0x9A), R(4, 0x5A)
+The second line would be encoded as N(1, 0x00), P(14), N(1, 0x1A)
+A possible bytecode encoding could be: A1 80 FF 60 9A 60 5A 08 00 81 0E 1A
+
+2.3.2. SCoA compression example 2
+---------------------------------
+Line size = 16 bytes
+FF FF FF FF FF FF FF FF 9A 9A 9A 9A 5A 5A 5A 5A
+5A 5A FF FF FF FF FF FF 9A 9A 9A 9A 5A 5A 5A 1A
+
+The first line, and the first two bytes of the second may be encoded as
+R(8, 0xFF), R(4, 0x9A), R(6, 0x5A).
+The rest of the second line could be encoded as P(13), N(1, 0x1A)
+A possible bytecode encoding could be: A1 80 FF 60 9A 70 5A 81 0D 1A
+
+2.3.3. SCoA decompression example 1
+-----------------------------------
+Line size = 16 bytes
+A1 C0 01 23 45 67 89 AB CD EF A1 80 FF 0F FF 41
+
+Decodes to:
+N(8, [0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF]); R(8, 0xFF); then
+P(7); N(1, 0xFF); P(16-(7+1));
+
+The final result:
+01 23 45 67 89 AB CD EF FF FF FF FF FF FF FF FF
+01 23 45 67 89 AB CD FF FF FF FF FF FF FF FF FF
+
+2.3.4. SCoA decompression example 2
+-----------------------------------
+Line size = 600 bytes
+BF B8 00 B8 BF 00 AB 90 00 9F 9F 86 7E FF A5 98 FF
+
+Decodes to:
+R(255, 0x0); R(255, 0x0); R(90, 0x0);  600 * 0x0 for first line, followed by
+P(550); R(7, 0xFF); R(43, 0xFF);       550 * 0x0, then 50 * 0xFF on the next
 
 
 3. Hi-SCoA compression algorithm

@@ -1,6 +1,6 @@
 SUBDIRS = src tests
 
-dist_doc_DATA = SPECS INSTALL.git
+dist_doc_DATA = SPECS INSTALL.md
 EXTRA_DIST = src/canon-lbp.drv ppd
 nodist_data_DATA = Makefile.in
 

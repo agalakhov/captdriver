@@ -496,3 +496,4 @@ static struct lbp2900_ops_s lbp3010_ops = {
 	.wait_ready = capt_wait_xready_only,
 };
 register_printer("LBP3010/LBP3018/LBP3050", lbp3010_ops.ops, WORKS);
+register_printer("LBP3100/LBP3108/LBP3150", lbp3010_ops.ops, EXPERIMENTAL);

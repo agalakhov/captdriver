@@ -30,8 +30,6 @@
 
 static uint8_t capt_iobuf[0x10000];
 static size_t  capt_iosize;
-static cups_sc_status_t last_send_status = CUPS_SC_STATUS_NONE;
-static bool sendrecv_started = false;
 
 static void capt_debug_buf(const char *level, size_t size)
 {
@@ -205,28 +203,3 @@ void capt_multi_send(void)
 	capt_send_buf();
 }
 
-void capt_cleanup(void)
-{
-	/* For use with handling job cancellations */
-	if (sendrecv_started) {
-
-		if (last_send_status != CUPS_SC_STATUS_OK) {
-			capt_send_buf();
-			fprintf(stderr, "DEBUG: CAPT: finished interrupted send\n");
-		}
-
-		/* not else because recv cleanup is needed after finishing send */
-		if (last_send_status == CUPS_SC_STATUS_OK) {
-			size_t bytes = 0x10000;
-			size_t bs = 64;
-			while(bytes > 0) {
-				bytes -= bs;
-				cupsBackChannelRead(NULL, bs, 0.01);
-			}
-			fprintf(stderr, "DEBUG: CAPT: finished interrupted recv\n");
-		}
-
-	capt_iosize = 0;
-	sendrecv_started = false;
-	}
-}

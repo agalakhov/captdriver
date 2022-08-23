@@ -369,7 +369,6 @@ static void lbp2900_cancel_cleanup(struct printer_state_s *state)
 	const struct capt_status_s *status = lbp2900_get_status(state->ops);
 	uint8_t jbuf[2] = { LO(job), HI(job) };
 
-	capt_cleanup();
 	capt_sendrecv(CAPT_GPIO, lbp2900_gpio_init, ARRAY_SIZE(lbp2900_gpio_init), NULL, 0);
 	send_job_start(4, status->page_completed);
 	capt_sendrecv(CAPT_JOB_END, jbuf, 2, NULL, 0);
@@ -382,7 +381,6 @@ static void lbp3010_cancel_cleanup(struct printer_state_s *state)
 	const struct capt_status_s *status = lbp2900_get_status(state->ops);
 	uint8_t jbuf[2] = { LO(job), HI(job) };
 
-	capt_cleanup();
 	capt_sendrecv(CAPT_GPIO, lbp3010_gpio_init, ARRAY_SIZE(lbp3010_gpio_init), NULL, 0);
 	send_job_start(4, status->page_completed);
 	capt_sendrecv(CAPT_JOB_END, jbuf, 2, NULL, 0);

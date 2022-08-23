@@ -208,7 +208,6 @@ static void send_page_data(struct printer_state_s *state, const struct cached_pa
 static void do_cancel(int s)
 {
 	(void) s;
-	fprintf(stderr, "DEBUG: CAPT: begin job cancellation cleanup\n");
 
 	if (ops)
 		ops->cancel_cleanup(state);
@@ -228,7 +227,6 @@ static void do_cancel(int s)
 	if (state)
 		free_state();
 
-	fprintf(stderr, "DEBUG: CAPT: job cancellation cleanup complete\n");
 	exit(1);
 }
 

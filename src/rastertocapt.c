@@ -280,6 +280,10 @@ static void do_print(int fd)
 
 		fprintf(stderr, "DEBUG: CAPT: rastertocapt: start page %u\n", state->ipage);
 		if (ops->page_prologue) {
+			if (cached_page->dims.manual_duplex && state->ipage > 1) {
+				fprintf(stderr, "DEBUG: CAPT: rastertocapt: manual duplex: press button to continue\n");
+				ops->wait_user(state);
+			}
 			bool ok = ops->page_prologue(state, &cached_page->dims);
 			if (! ok) {
 				fprintf(stderr, "DEBUG: CAPT: rastertocapt: can't start page\n");

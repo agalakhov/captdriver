@@ -29,6 +29,7 @@ void page_set_dims(struct page_dims_s *dims, const struct cups_page_header2_s *h
 	dims->paper_height = header->cupsHeight; //header->PageSize[1] * header->HWResolution[1] / 72;
 	dims->toner_save = header->cupsInteger[0];
 	dims->ink_k = header->cupsInteger[1];
+	dims->manual_duplex = header->cupsInteger[2];
 	dims->line_size = header->PageSize[0];
 	dims->num_lines = header->cupsHeight;
 	dims->band_size = header->cupsRowCount;

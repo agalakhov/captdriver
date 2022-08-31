@@ -16,7 +16,7 @@ Copyright "(C)2020 Moses Chong"
 ColorModel "Gray/Grayscale" k chunky 2
 Filter application/vnd.cups-raster 1 rastertocapt
 *Manufacturer "Canon Inc"
-Version 0.1.3
+Version 0.1.4
 {
 	Font *
 
@@ -24,6 +24,10 @@ Version 0.1.3
 	Option "captTonerSave/Toner Save" Boolean AnySetup 10
         *Choice False/Disabled "<</cupsInteger0 0>>setpagedevice"
         Choice True/Enabled    "<</cupsInteger0 1>>setpagedevice"
+
+	Option "captManualDuplex/Manual Duplex" Boolean AnySetup 10
+	*Choice False/Disabled	"<</cupsInteger2 0>>setpagedevice"
+	Choice True/Enabled	"<</cupsInteger2 1>>setpagedevice"
 
 	{
                 *Resolution k 1 70 592 0 "600dpi/600 DPI"

@@ -31,6 +31,7 @@ struct page_dims_s {
 	unsigned paper_width;
 	unsigned paper_height;
 	unsigned toner_save;
+	unsigned manual_duplex;
 	unsigned ink_k;
 	unsigned margin_height;
 	unsigned margin_width;

@@ -49,6 +49,7 @@ enum capt_command {
 	CAPT_UPLOAD_2   = 0xE0A5,
 	CAPT_FIRE       = 0xE0A7,
 	CAPT_JOB_END    = 0xE0A9,
+	CAPT_LBP6000_SETUP_0 = 0xE0BA,
 
 	CAPT_JOB_SETUP  = 0xE1A1,
 	CAPT_GPIO       = 0xE1A2,

@@ -78,6 +78,10 @@ static const uint8_t lbp3010_gpio_init[] = {
 	0x00, 0x00, /* S7 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
+static const uint8_t lbp6000_init[] = {
+        0x01, 0x00,
+};
+
 static const struct capt_status_s *lbp2900_get_status(const struct printer_ops_s *ops)
 {
 	const struct lbp2900_ops_s *lops = container_of(ops, struct lbp2900_ops_s, ops);
@@ -180,6 +184,31 @@ static void lbp3010_job_prologue(struct printer_state_s *state)
 	job=WORD(buf[2], buf[3]);
 
 	capt_sendrecv(CAPT_GPIO, lbp3010_gpio_init, ARRAY_SIZE(lbp3010_gpio_init), NULL, 0);
+	lbp2900_wait_ready(state->ops);
+
+	send_job_start(1, 0);
+	lbp2900_wait_ready(state->ops);
+}
+
+static void lbp6000_job_prologue(struct printer_state_s *state)
+{
+	(void) state;
+	uint8_t buf[8];
+	size_t size;
+
+	capt_sendrecv(CAPT_IDENT, NULL, 0, NULL, 0);
+	sleep(1);
+	capt_init_status();
+	lbp2900_get_status(state->ops);
+
+	capt_sendrecv(CAPT_START_0, NULL, 0, NULL, 0);
+	capt_sendrecv(CAPT_JOB_BEGIN, magicbuf_0, ARRAY_SIZE(magicbuf_0), buf, &size);
+	job=WORD(buf[2], buf[3]);
+
+	capt_sendrecv(CAPT_GPIO, lbp3010_gpio_init, ARRAY_SIZE(lbp3010_gpio_init), NULL, 0);
+	lbp2900_wait_ready(state->ops);
+
+	capt_sendrecv(CAPT_LBP6000_SETUP_0, lbp6000_init, ARRAY_SIZE(lbp6000_init), NULL, 0);
 	lbp2900_wait_ready(state->ops);
 
 	send_job_start(1, 0);
@@ -493,6 +522,27 @@ static struct lbp2900_ops_s lbp3010_ops = {
 	.get_status = capt_get_xstatus_only,
 	.wait_ready = capt_wait_xready_only,
 };
+
+static struct lbp2900_ops_s lbp6000_ops = {
+	.ops = {
+		.job_prologue = lbp6000_job_prologue,
+		.job_epilogue = lbp2900_job_epilogue,
+		.page_setup = lbp2900_page_setup,
+		.page_prologue = lbp2900_page_prologue,
+		.page_epilogue = lbp2900_page_epilogue,
+		.compress_band = ops_compress_band_hiscoa,
+		.send_band = ops_send_band_hiscoa,
+		.cancel_cleanup = lbp3010_cancel_cleanup,
+		.wait_user = lbp3010_wait_user,
+	},
+	.gpio = {
+		.init = lbp3010_gpio_init,
+		.blink = lbp3010_gpio_blink,
+	},
+	.get_status = capt_get_xstatus_only,
+	.wait_ready = capt_wait_xready_only,
+};
+
 register_printer("LBP3010/LBP3018/LBP3050", lbp3010_ops.ops, WORKS);
 register_printer("LBP3100/LBP3108/LBP3150", lbp3010_ops.ops, EXPERIMENTAL);
-register_printer("LBP6000/LBP6018", lbp3010_ops.ops, EXPERIMENTAL);
+register_printer("LBP6000/LBP6018", lbp6000_ops.ops, EXPERIMENTAL);

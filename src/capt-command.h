@@ -52,6 +52,7 @@ enum capt_command {
 
 	CAPT_JOB_SETUP  = 0xE1A1,
 	CAPT_GPIO       = 0xE1A2,
+	CAPT3_UNK_0     = 0xE0BA,
 };
 
 

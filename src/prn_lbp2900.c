@@ -68,6 +68,10 @@ static const uint8_t lbp2900_gpio_init[] = {
 	0x00, 0x00, 0x00, 0x00,
 };
 
+static const uint8_t lbp3000_job_init[] = {
+	0x00, 0x00,
+};
+
 static const uint8_t lbp3010_gpio_blink[] = {
         /* led */ 0x31, 0x00, 0x00, /* S6 */ 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, /* S7 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -78,7 +82,7 @@ static const uint8_t lbp3010_gpio_init[] = {
 	0x00, 0x00, /* S7 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-static const uint8_t lbp6000_init[] = {
+static const uint8_t lbp6000_job_init[] = {
         0x01, 0x00,
 };
 
@@ -162,8 +166,7 @@ static void lbp3000_job_prologue(struct printer_state_s *state)
 
 	/* There's also that command, that apparently does something, and does something,
 	 * but it's there in the Wireshark logs. Response data == command data. */
-	uint8_t dummy[2] = {0, 0};
-	capt_sendrecv(0xE0A6, dummy, sizeof(dummy), NULL, 0);
+	capt_sendrecv(CAPT_LBP3000_SETUP_0, lbp3000_job_init, ARRAY_SIZE(lbp3000_job_init), NULL, 0);
 
 	lbp2900_wait_ready(state->ops);
 }
@@ -208,7 +211,7 @@ static void lbp6000_job_prologue(struct printer_state_s *state)
 	capt_sendrecv(CAPT_GPIO, lbp3010_gpio_init, ARRAY_SIZE(lbp3010_gpio_init), NULL, 0);
 	lbp2900_wait_ready(state->ops);
 
-	capt_sendrecv(CAPT_LBP6000_SETUP_0, lbp6000_init, ARRAY_SIZE(lbp6000_init), NULL, 0);
+	capt_sendrecv(CAPT_LBP6000_SETUP_0, lbp6000_job_init, ARRAY_SIZE(lbp6000_job_init), NULL, 0);
 	lbp2900_wait_ready(state->ops);
 
 	send_job_start(1, 0);

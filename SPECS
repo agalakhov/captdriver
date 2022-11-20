@@ -46,8 +46,10 @@ any other commands. Failure to do so will cause printer deadlock. If the command
 requires no reply, the driver should not try to wait to the reply or else it
 will wait forever.
 
-If the reply has size of more than 6 bytes, it is split into two packets, the
-one of 6 bytes and the one with the rest. No replies are shorter than 6 bytes.
+If the reply has size of more than 6 bytes, it is split into two or more
+packets. The first packet contains the first 6 bytes, subsequent packets contain
+the rest of the reply. Packets after the first also have a maximum size, all
+known printers have a 64 byte limit. No replies are shorter than 6 bytes.
 
 Quirk: some printer models reply to some commands with size encoded as BCD
 instead of normal binary code. This is obviously a bug in the printer firmware.
